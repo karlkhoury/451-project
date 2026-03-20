@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- READ_PHONE_STATE: needed to access TelephonyManager cell info -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
+    <!-- ACCESS_FINE_LOCATION: required by Android to read cell info (getAllCellInfo) -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- INTERNET: to send data to our server -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- FOREGROUND_SERVICE: to keep collecting data in the background -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.NetworkCellAnalyzer"
+        android:usesCleartextTraffic="true"
+        tools:targetApi="31">
+
+        <!-- Main screen: shows real-time cell info -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Statistics screen: shows stats from server -->
+        <activity android:name=".StatisticsActivity" />
+
+        <!-- Background service that collects and sends cell data every 10 seconds -->
+        <service
+            android:name=".CellInfoService"
+            android:foregroundServiceType="location" />
+
+    </application>
+</manifest>

@@ -1,0 +1,28 @@
+# Android build files
+*.iml
+.gradle/
+/local.properties
+.idea/
+*.apk
+*.aab
+*.ap_
+*.dex
+/build/
+/app/build/
+/captures
+.externalNativeBuild/
+.cxx/
+*.hprof
+
+# Server
+__pycache__/
+*.pyc
+*.db
+*.sqlite3
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Ngrok
+ngrok.exe
