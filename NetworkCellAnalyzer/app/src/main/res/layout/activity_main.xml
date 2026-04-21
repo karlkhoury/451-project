@@ -38,7 +38,7 @@
                 android:id="@+id/editServerUrl"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="http://10.0.2.2:5000"
+                android:text="https://four51-project.onrender.com"
                 android:inputType="textUri" />
         </com.google.android.material.textfield.TextInputLayout>
 

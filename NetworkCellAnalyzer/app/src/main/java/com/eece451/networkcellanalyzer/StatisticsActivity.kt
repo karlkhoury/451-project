@@ -49,7 +49,7 @@ class StatisticsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_statistics)
 
-        val serverUrl = intent.getStringExtra("server_url") ?: "http://10.0.2.2:5000"
+        val serverUrl = intent.getStringExtra("server_url") ?: "https://four51-project.onrender.com"
         serverClient = ServerClient(serverUrl)
 
         // Find UI elements

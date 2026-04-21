@@ -38,7 +38,7 @@ class CellInfoService : Service() {
     override fun onCreate() {
         super.onCreate()
         collector = CellInfoCollector(this)
-        serverClient = ServerClient("http://10.0.2.2:5000")
+        serverClient = ServerClient("https://four51-project.onrender.com")
         createNotificationChannel()
     }
 
@@ -47,7 +47,7 @@ class CellInfoService : Service() {
      * show a foreground notification, and begin the monitoring loop.
      */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val serverUrl = intent?.getStringExtra(EXTRA_SERVER_URL) ?: "http://10.0.2.2:5000"
+        val serverUrl = intent?.getStringExtra(EXTRA_SERVER_URL) ?: "https://four51-project.onrender.com"
         serverClient.updateServerUrl(serverUrl)
 
         // Show a persistent notification (required for foreground services)
