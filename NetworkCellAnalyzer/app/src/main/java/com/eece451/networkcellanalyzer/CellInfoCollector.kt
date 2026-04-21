@@ -150,7 +150,8 @@ class CellInfoCollector(private val context: Context) {
                             frequencyBand = if (identity.nrarfcn != Int.MAX_VALUE) identity.nrarfcn else null,
                             cellId = "${identity.tac}-${identity.nci}",
                             timestamp = timestamp,
-                            deviceId = deviceId
+                            deviceId = deviceId,
+                            macAddress = macAddress
                         )
                     } else null
                 }
