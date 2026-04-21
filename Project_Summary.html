@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Cell Analyzer - Full Project Summary</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            color: #2d2d2d;
+            background: #f5f5f5;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 50px 60px;
+            border-radius: 12px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+        }
+        h1 {
+            font-size: 28px;
+            color: #1a1a2e;
+            border-bottom: 3px solid #6c63ff;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            font-size: 22px;
+            color: #6c63ff;
+            margin-top: 40px;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        h3 {
+            font-size: 17px;
+            color: #333;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+        p { margin-bottom: 12px; }
+        ul, ol {
+            margin-left: 25px;
+            margin-bottom: 15px;
+        }
+        li { margin-bottom: 6px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0 25px 0;
+            font-size: 14px;
+        }
+        th {
+            background: #6c63ff;
+            color: white;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        tr:nth-child(even) { background: #f9f9ff; }
+        tr:hover { background: #f0eeff; }
+        code {
+            background: #f0eeff;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            color: #6c63ff;
+        }
+        pre {
+            background: #1a1a2e;
+            color: #e0e0e0;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .highlight-box {
+            background: #f0eeff;
+            border-left: 4px solid #6c63ff;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+        }
+        .warning-box {
+            background: #fff8e1;
+            border-left: 4px solid #ffa726;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+        }
+        .success-box {
+            background: #e8f5e9;
+            border-left: 4px solid #66bb6a;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+        }
+        .flow-diagram {
+            background: #1a1a2e;
+            color: #a5d6a7;
+            padding: 25px;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        .section-number {
+            display: inline-block;
+            background: #6c63ff;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-android { background: #e8f5e9; color: #2e7d32; }
+        .badge-server { background: #e3f2fd; color: #1565c0; }
+        .badge-config { background: #fff3e0; color: #e65100; }
+        footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <h1>Network Cell Analyzer - Full Project Summary</h1>
+    <p><strong>Course:</strong> EECE 451 &nbsp; | &nbsp; <strong>Date:</strong> March 2026</p>
+
+    <!-- ============================================================ -->
+    <h2><span class="section-number">1</span> What Is This Application?</h2>
+
+    <p>This is a <strong>two-part system</strong> (Android app + Python server) whose purpose is to:</p>
+    <ol>
+        <li><strong>Collect real-time cellular network data</strong> from an Android phone (which operator you're connected to, signal strength, network type like 2G/3G/4G, etc.)</li>
+        <li><strong>Send that data to a server</strong> every 10 seconds</li>
+        <li><strong>Store it in a database</strong> and compute <strong>statistics</strong> (average signal, time spent on each operator, etc.)</li>
+        <li><strong>Display a web dashboard</strong> showing connected devices and recent measurements</li>
+    </ol>
+
+    <div class="highlight-box">
+        Think of it as a <strong>network quality monitor</strong> &mdash; like a speedtest app, but focused on raw cellular signal metrics over time.
+    </div>
+
+    <!-- ============================================================ -->
+    <h2><span class="section-number">2</span> How the Project Is Organized (Folder Structure)</h2>
+
+    <pre>
+451-project/
+└── NetworkCellAnalyzer/
+    ├── app/                          &lt;-- THE ANDROID APP
+    │   ├── build.gradle.kts          &lt;-- App dependencies &amp; settings
+    │   └── src/main/
+    │       ├── AndroidManifest.xml   &lt;-- Permissions &amp; app config
+    │       ├── java/.../             &lt;-- Kotlin source code (6 files)
+    │       └── res/                  &lt;-- Layouts, colors, themes
+    │           ├── layout/           &lt;-- UI screens (XML)
+    │           └── values/           &lt;-- Colors, strings, themes
+    │
+    ├── server/                       &lt;-- THE PYTHON SERVER
+    │   ├── server.py                 &lt;-- Flask API + web dashboard
+    │   ├── requirements.txt          &lt;-- Python dependencies (Flask)
+    │   └── celldata.db               &lt;-- SQLite database file
+    │
+    ├── build.gradle.kts              &lt;-- Root Gradle config
+    ├── settings.gradle.kts           &lt;-- Project settings
+    ├── gradle.properties             &lt;-- Gradle options
+    └── gradle/wrapper/               &lt;-- Gradle wrapper</pre>
+
+    <!-- ============================================================ -->
+    <h2><span class="section-number">3</span> Every File Explained</h2>
+
+    <!-- SERVER FILES -->
+    <h3><span class="badge badge-server">SERVER</span> Server-Side Files</h3>
+
+    <table>
+        <thead>
+            <tr><th>File</th><th>What It Does</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>server/server.py</code></td>
+                <td>The <strong>brain of the server</strong>. A Flask web app that: (1) receives cell data via <code>POST /api/celldata</code>, (2) stores it in SQLite, (3) computes statistics via <code>GET /api/stats</code>, (4) shows a web dashboard at <code>/</code> with connected devices and recent data. Auto-refreshes every 10 seconds.</td>
+            </tr>
+            <tr>
+                <td><code>server/requirements.txt</code></td>
+                <td>Lists Python dependencies &mdash; just <code>Flask==3.0.0</code></td>
+            </tr>
+            <tr>
+                <td><code>server/celldata.db</code></td>
+                <td>The SQLite database file (auto-created). Stores all measurements with columns: operator, signal_power, sinr, network_type, frequency_band, cell_id, timestamp, device_id, ip_address, received_at</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Server Database Schema</h3>
+    <pre>
+celldata table:
+  id              INTEGER PRIMARY KEY AUTOINCREMENT
+  operator        TEXT NOT NULL          (e.g., "Alfa", "Touch")
+  signal_power    INTEGER NOT NULL       (dBm value)
+  sinr            INTEGER                (Signal-to-Interference Ratio, nullable)
+  network_type    TEXT NOT NULL          ("2G", "3G", "4G")
+  frequency_band  INTEGER                (EARFCN/ARFCN/UARFCN, nullable)
+  cell_id         TEXT NOT NULL          (Location Area Code - Cell ID)
+  timestamp       TEXT NOT NULL          (ISO format from device)
+  device_id       TEXT NOT NULL          (Unique device identifier)
+  ip_address      TEXT                   (Client IP address)
+  received_at     TEXT NOT NULL          (Server-side timestamp)</pre>
+
+    <h3>Server API Endpoints</h3>
+
+    <table>
+        <thead>
+            <tr><th>Endpoint</th><th>Method</th><th>What It Does</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>/api/celldata</code></td>
+                <td>POST</td>
+                <td>Receives cell measurements from Android devices. Expects JSON with: operator, signalPower, sinr, networkType, frequencyBand, cellId, timestamp, deviceId. Stores in database. Returns <code>{"status": "ok"}</code>.</td>
+            </tr>
+            <tr>
+                <td><code>/api/stats</code></td>
+                <td>GET</td>
+                <td>Computes statistics from stored measurements. Supports query params: <code>start</code>, <code>end</code> (date range), <code>device_id</code>. Returns: connectivity per operator, connectivity per network type, avg signal per network type, avg signal per device, avg SINR per network type.</td>
+            </tr>
+            <tr>
+                <td><code>/</code></td>
+                <td>GET</td>
+                <td>Web dashboard showing: number of active devices, device list with IPs and status, recent 20 measurements table. Auto-refreshes every 10 seconds. Devices marked "Active" if seen in last 30 seconds.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ANDROID FILES -->
+    <h3><span class="badge badge-android">ANDROID</span> Kotlin Source Files (6 files)</h3>
+
+    <table>
+        <thead>
+            <tr><th>File</th><th>What It Does</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>MainActivity.kt</code></td>
+                <td>The <strong>main screen</strong>. Has a text field for server URL, Start/Stop button, and displays live cell data (operator, signal, network type, etc.). Listens for broadcasts from the background service to update the UI in real-time.</td>
+            </tr>
+            <tr>
+                <td><code>CellInfoCollector.kt</code></td>
+                <td>The <strong>data reader</strong>. Uses Android's <code>TelephonyManager.getAllCellInfo()</code> to read the phone's actual cellular connection. Handles 2G (GSM), 3G (WCDMA), and 4G (LTE) differently, extracting signal power, SINR, frequency band, and cell ID for each type.</td>
+            </tr>
+            <tr>
+                <td><code>CellInfoData.kt</code></td>
+                <td>A simple <strong>data class</strong> &mdash; a container that holds one snapshot of cell info: operator, signalPower, sinr, networkType, frequencyBand, cellId, timestamp, deviceId. Like a struct.</td>
+            </tr>
+            <tr>
+                <td><code>CellInfoService.kt</code></td>
+                <td>The <strong>background service</strong>. Runs as a foreground service (shows notification) so Android doesn't kill it. Every 10 seconds it: collects cell data &rarr; sends to server &rarr; broadcasts to UI. Keeps running even when the app is minimized.</td>
+            </tr>
+            <tr>
+                <td><code>ServerClient.kt</code></td>
+                <td>The <strong>HTTP client</strong>. Uses OkHttp to send cell data to the Flask server (<code>POST /api/celldata</code>) and fetch statistics (<code>GET /api/stats</code>). Converts data to JSON using Gson.</td>
+            </tr>
+            <tr>
+                <td><code>StatisticsActivity.kt</code></td>
+                <td>The <strong>statistics screen</strong>. User picks a date range, hits "Fetch", and it displays: % time per operator, % time per network type, average signal per network type, average signal per device, average SINR per network type.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3><span class="badge badge-android">ANDROID</span> XML Layout Files</h3>
+
+    <table>
+        <thead>
+            <tr><th>File</th><th>What It Does</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>activity_main.xml</code></td>
+                <td>The <strong>main screen layout</strong> &mdash; server URL input, Start/Stop button, View Statistics button, and a card showing live cell info (7 data fields + status indicator)</td>
+            </tr>
+            <tr>
+                <td><code>activity_statistics.xml</code></td>
+                <td>The <strong>statistics screen layout</strong> &mdash; date pickers, fetch button, and 5 text sections for displaying stats results</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3><span class="badge badge-config">CONFIG</span> Configuration &amp; Build Files</h3>
+
+    <table>
+        <thead>
+            <tr><th>File</th><th>What It Does</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>AndroidManifest.xml</code></td>
+                <td>Declares all <strong>permissions</strong> (location, phone state, internet, notifications, foreground service), registers both activities and the background service, enables cleartext HTTP</td>
+            </tr>
+            <tr>
+                <td><code>app/build.gradle.kts</code></td>
+                <td>App-level build config &mdash; sets min SDK 26 (Android 8.0), target SDK 34 (Android 14), and lists dependencies: OkHttp, Gson, Coroutines, Material Components</td>
+            </tr>
+            <tr>
+                <td><code>build.gradle.kts</code> (root)</td>
+                <td>Root build config &mdash; Android Gradle Plugin 8.2.0, Kotlin 1.9.21</td>
+            </tr>
+            <tr>
+                <td><code>settings.gradle.kts</code></td>
+                <td>Names the project "NetworkCellAnalyzer", includes the <code>:app</code> module</td>
+            </tr>
+            <tr>
+                <td><code>gradle.properties</code></td>
+                <td>Gradle options: JVM memory (2048MB), UTF-8 encoding, AndroidX enabled</td>
+            </tr>
+            <tr>
+                <td><code>colors.xml</code></td>
+                <td>Defines colors including signal quality indicators (green = good, amber = medium, red = bad)</td>
+            </tr>
+            <tr>
+                <td><code>themes.xml</code></td>
+                <td>Material Design theme with purple primary color</td>
+            </tr>
+            <tr>
+                <td><code>strings.xml</code></td>
+                <td>App name string: "Network Cell Analyzer"</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ============================================================ -->
+    <h2><span class="section-number">4</span> Android Permissions Required</h2>
+
+    <table>
+        <thead>
+            <tr><th>Permission</th><th>Why It's Needed</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>READ_PHONE_STATE</code></td><td>Access TelephonyManager for cell info</td></tr>
+            <tr><td><code>ACCESS_FINE_LOCATION</code></td><td>Required by Android to use <code>getAllCellInfo()</code></td></tr>
+            <tr><td><code>ACCESS_COARSE_LOCATION</code></td><td>Location permission fallback</td></tr>
+            <tr><td><code>INTERNET</code></td><td>Send data to server</td></tr>
+            <tr><td><code>ACCESS_NETWORK_STATE</code></td><td>Check network connectivity</td></tr>
+            <tr><td><code>FOREGROUND_SERVICE</code></td><td>Run background service with notification</td></tr>
+            <tr><td><code>FOREGROUND_SERVICE_LOCATION</code></td><td>Specify service type is location</td></tr>
+            <tr><td><code>POST_NOTIFICATIONS</code></td><td>Show foreground service notification (Android 13+)</td></tr>
+        </tbody>
+    </table>
+
+    <!-- ============================================================ -->
+    <h2><span class="section-number">5</span> How Data Flows Through the System</h2>
+
+    <div class="flow-diagram">
+PHONE                                           SERVER
+-----                                           ------
+
+User taps "Start"
+       |
+       v
+CellInfoService starts (foreground, every 10s)
+       |
+       v
+CellInfoCollector reads TelephonyManager
+  |-- 2G? --> GSM signal, ARFCN, LAC-CID
+  |-- 3G? --> WCDMA signal, UARFCN, LAC-CID
+  +-- 4G? --> LTE RSRP, SINR, EARFCN, TAC-CI
+       |
+       v
+CellInfoData object created
+       |
+       |----> ServerClient sends POST /api/celldata ---->  Flask receives JSON
+       |                                                        |
+       |                                                        v
+       |                                                  Stores in SQLite
+       |                                                   (celldata.db)
+       |
+       +----> Broadcast to MainActivity
+                    |
+                    v
+             UI updates (operator, signal, etc.)
+
+
+STATISTICS FLOW:
+
+StatisticsActivity --> GET /api/stats --> Flask queries DB --> Returns JSON --> Display</div>
+
+    <!-- ============================================================ -->
+    <h2><span class="section-number">6</span> How Each Network Type Is Handled</h2>
+
+    <table>
+        <thead>
+            <tr><th>Network</th><th>Android Class</th><th>Signal</th><th>SINR</th><th>Frequency</th><th>Cell ID Format</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>2G (GSM)</strong></td>
+                <td><code>CellInfoGsm</code></td>
+                <td>RSSI via <code>getDbm()</code></td>
+                <td>N/A (null)</td>
+                <td><code>getArfcn()</code></td>
+                <td>LAC-CID</td>
+            </tr>
+            <tr>
+                <td><strong>3G (WCDMA)</strong></td>
+                <td><code>CellInfoWcdma</code></td>
+                <td><code>getDbm()</code></td>
+                <td>N/A (null)</td>
+                <td><code>getUarfcn()</code></td>
+                <td>LAC-CID</td>
+            </tr>
+            <tr>
+                <td><strong>4G (LTE)</strong></td>
+                <td><code>CellInfoLte</code></td>
+                <td>RSRP via <code>getDbm()</code></td>
+                <td><code>getRssnr()</code></td>
+                <td><code>getEarfcn()</code></td>
+                <td>TAC-CI</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ============================================================ -->
+    <h2><span class="section-number">7</span> Technologies Used</h2>
+
+    <h3>Android App</h3>
+    <ul>
+        <li><strong>Language:</strong> Kotlin</li>
+        <li><strong>Build System:</strong> Gradle 8.2</li>
+        <li><strong>Target:</strong> Android 14 (API 34), Minimum: Android 8.0 (API 26)</li>
+        <li><strong>HTTP Client:</strong> OkHttp 4.12.0</li>
+        <li><strong>JSON:</strong> Gson 2.10.1</li>
+        <li><strong>Async:</strong> Kotlin Coroutines 1.7.3</li>
+        <li><strong>UI:</strong> Material Components, ConstraintLayout</li>
+    </ul>
+
+    <h3>Server</h3>
+    <ul>
+        <li><strong>Language:</strong> Python</li>
+        <li><strong>Framework:</strong> Flask 3.0.0</li>
+        <li><strong>Database:</strong> SQLite3 (embedded, no setup needed)</li>
+        <li><strong>Concurrency:</strong> Python threading locks</li>
+    </ul>
+
+    <!-- ============================================================ -->
+    <h2><span class="section-number">8</span> What We Did (Steps Taken)</h2>
+
+    <ol>
+        <li><strong>Created the Android project</strong> in Android Studio with package <code>com.eece451.networkcellanalyzer</code></li>
+        <li><strong>Wrote 6 Kotlin files</strong> &mdash; the collector, data class, service, HTTP client, and 2 activities</li>
+        <li><strong>Designed 2 XML layouts</strong> &mdash; main screen and statistics screen</li>
+        <li><strong>Configured permissions</strong> in AndroidManifest.xml (location, phone state, internet, foreground service)</li>
+        <li><strong>Added dependencies</strong> in build.gradle.kts (OkHttp, Gson, Coroutines)</li>
+        <li><strong>Created the Flask server</strong> with 3 endpoints (<code>/</code>, <code>/api/celldata</code>, <code>/api/stats</code>)</li>
+        <li><strong>Set up SQLite</strong> database schema in server.py</li>
+        <li><strong>Uploaded everything to Git</strong> as a single initial commit</li>
+    </ol>
+
+    <!-- ============================================================ -->
+    <h2><span class="section-number">9</span> What's NOT Done Yet (Remaining Steps)</h2>
+
+    <h3>1. Connecting Phone to Server Over a Network</h3>
+
+    <p>Right now the app defaults to <code>http://10.0.2.2:5000</code> which only works on the <strong>Android emulator</strong> (10.0.2.2 is a special alias for your PC's localhost from inside the emulator).</p>
+
+    <div class="success-box">
+        <strong>Option A: Same Wi-Fi Network (Easiest)</strong>
+        <ol>
+            <li>Connect your phone and PC to the <strong>same Wi-Fi</strong></li>
+            <li>Find your PC's local IP (run <code>ipconfig</code> in Command Prompt, look for <code>192.168.x.x</code>)</li>
+            <li>Run the server with: <code>python server.py</code> (it already binds to <code>0.0.0.0</code>)</li>
+            <li>In the app, enter: <code>http://192.168.x.x:5000</code></li>
+        </ol>
+    </div>
+
+    <div class="warning-box">
+        <strong>Option B: ngrok (Different Networks)</strong>
+        <p>If your phone and PC are on <strong>different networks</strong> (e.g., phone on mobile data, PC on home Wi-Fi):</p>
+        <ol>
+            <li>Install ngrok: <code>https://ngrok.com/download</code></li>
+            <li>Run: <code>ngrok http 5000</code></li>
+            <li>ngrok gives you a public URL like <code>https://abc123.ngrok.io</code></li>
+            <li>In the app, enter that URL as the server address</li>
+            <li><strong>Note:</strong> ngrok provides HTTPS which works fine</li>
+        </ol>
+    </div>
+
+    <div class="highlight-box">
+        <strong>Option C: Cloud Hosting</strong>
+        <p>Deploy <code>server.py</code> to a cloud service (Heroku, Render, PythonAnywhere, etc.) so it has a permanent public URL.</p>
+    </div>
+
+    <h3>2. Testing on a Real Device</h3>
+    <ul>
+        <li>The app needs a <strong>real phone with a SIM card</strong> to get actual cell data</li>
+        <li>The emulator returns dummy/empty cell info</li>
+        <li>You need to grant location + phone permissions when prompted</li>
+    </ul>
+
+    <h3>3. Installing Python Dependencies</h3>
+    <pre>
+cd NetworkCellAnalyzer/server
+pip install -r requirements.txt
+python server.py</pre>
+
+    <h3>4. Building the APK</h3>
+    <p>In Android Studio: <strong>Build &gt; Build Bundle(s) / APK(s) &gt; Build APK</strong> to get an installable file for real devices.</p>
+
+    <!-- ============================================================ -->
+    <footer>
+        <p>EECE 451 - Network Cell Analyzer Project Summary</p>
+    </footer>
+
+</div>
+</body>
+</html>

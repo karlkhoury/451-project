@@ -20,6 +20,7 @@ from flask import Flask, request, jsonify, render_template_string
 import sqlite3
 import datetime
 import threading
+import os
 
 app = Flask(__name__)
 DB_NAME = "celldata.db"
@@ -316,17 +317,20 @@ def dashboard():
     )
 
 
+# Initialize DB at import time so it runs under gunicorn (cloud) too
+init_db()
+
 if __name__ == "__main__":
-    init_db()
+    port = int(os.environ.get("PORT", 5000))
+    debug = os.environ.get("FLASK_DEBUG", "1") == "1"
     print("=" * 50)
     print("Network Cell Analyzer Server")
     print("=" * 50)
-    print(f"Dashboard:  http://localhost:5000")
-    print(f"API:        http://localhost:5000/api/celldata")
-    print(f"Stats:      http://localhost:5000/api/stats")
+    print(f"Dashboard:  http://localhost:{port}")
+    print(f"API:        http://localhost:{port}/api/celldata")
+    print(f"Stats:      http://localhost:{port}/api/stats")
     print()
-    print("From Android emulator use: http://10.0.2.2:5000")
+    print("From Android emulator use: http://10.0.2.2:" + str(port))
     print("From real phone use your PC's IP address")
     print("=" * 50)
-    # host="0.0.0.0" makes it accessible from other devices on the network
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=port, debug=debug)
