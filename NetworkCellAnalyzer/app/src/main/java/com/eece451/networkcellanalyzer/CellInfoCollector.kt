@@ -19,6 +19,7 @@ import java.util.*
  *    - CellInfoGsm    -> 2G (GSM/GPRS/EDGE)
  *    - CellInfoWcdma   -> 3G (UMTS)
  *    - CellInfoLte     -> 4G (LTE)
+ *    - CellInfoNr      -> 5G (NR = New Radio, Android 10+)
  * 3. We check which type it is and extract the relevant fields from each
  * 4. We only care about the REGISTERED cell (the one your phone is connected to)
  */
@@ -124,7 +125,26 @@ class CellInfoCollector(private val context: Context) {
                     )
                 }
 
-                else -> null
+                // ==================== 5G (NR - New Radio) ====================
+                else -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && cellInfo is CellInfoNr) {
+                        val identity = cellInfo.cellIdentity as CellIdentityNr
+                        val signal = cellInfo.cellSignalStrength as CellSignalStrengthNr
+
+                        val sinrValue = if (signal.ssSinr != Int.MAX_VALUE) signal.ssSinr else null
+
+                        CellInfoData(
+                            operator = operatorName,
+                            signalPower = signal.dbm,
+                            sinr = sinrValue,
+                            networkType = "5G",
+                            frequencyBand = if (identity.nrarfcn != Int.MAX_VALUE) identity.nrarfcn else null,
+                            cellId = "${identity.tac}-${identity.nci}",
+                            timestamp = timestamp,
+                            deviceId = deviceId
+                        )
+                    } else null
+                }
             }
         }
         return null
