@@ -22,5 +22,6 @@ data class CellInfoData(
     val frequencyBand: Int?,
     val cellId: String,
     val timestamp: String,
-    val deviceId: String
+    val deviceId: String,
+    val macAddress: String
 )

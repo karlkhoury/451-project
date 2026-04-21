@@ -57,9 +57,15 @@ def init_db():
             timestamp TEXT NOT NULL,
             device_id TEXT NOT NULL,
             ip_address TEXT,
+            mac_address TEXT,
             received_at TEXT NOT NULL
         )
     """)
+    # Migration: add mac_address to existing DBs that predate this column
+    try:
+        conn.execute("ALTER TABLE celldata ADD COLUMN mac_address TEXT")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
     conn.commit()
     conn.close()
 
@@ -91,9 +97,12 @@ def receive_celldata():
     client_ip = request.remote_addr
     now = datetime.datetime.now().isoformat()
 
+    mac_address = data.get("macAddress", "N/A")
+
     # Track this device as connected
     connected_devices[data.get("deviceId", "unknown")] = {
         "ip": client_ip,
+        "mac": mac_address,
         "last_seen": now
     }
 
@@ -102,8 +111,8 @@ def receive_celldata():
         conn.execute(
             """INSERT INTO celldata
                (operator, signal_power, sinr, network_type, frequency_band,
-                cell_id, timestamp, device_id, ip_address, received_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                cell_id, timestamp, device_id, ip_address, mac_address, received_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 data.get("operator", "Unknown"),
                 data.get("signalPower", 0),
@@ -114,6 +123,7 @@ def receive_celldata():
                 data.get("timestamp", now),
                 data.get("deviceId", "unknown"),
                 client_ip,
+                mac_address,
                 now,
             ),
         )
@@ -229,18 +239,20 @@ DASHBOARD_HTML = """
         <h3>Connected Devices: {{ device_count }}</h3>
     </div>
 
-    <h2>Device List</h2>
+    <h2>Device List (Currently and Previously Connected)</h2>
     <table>
         <tr>
             <th>Device ID</th>
             <th>IP Address</th>
+            <th>MAC Address</th>
             <th>Last Seen</th>
             <th>Status</th>
         </tr>
         {% for device_id, info in devices.items() %}
         <tr>
-            <td>{{ device_id }}</td>
+            <td>{{ device_id[:12] }}...</td>
             <td>{{ info.ip }}</td>
+            <td>{{ info.mac }}</td>
             <td>{{ info.last_seen }}</td>
             <td class="{{ 'connected' if info.active else 'disconnected' }}">
                 {{ 'Active' if info.active else 'Inactive' }}
@@ -296,6 +308,7 @@ def dashboard():
         active = (now - last_seen).total_seconds() < 30
         devices[dev_id] = {
             "ip": info["ip"],
+            "mac": info.get("mac", "N/A"),
             "last_seen": info["last_seen"],
             "active": active,
         }

@@ -7,6 +7,7 @@ import android.os.Build
 import android.provider.Settings
 import android.telephony.*
 import androidx.core.content.ContextCompat
+import java.net.NetworkInterface
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -46,6 +47,11 @@ class CellInfoCollector(private val context: Context) {
         // Get a unique device ID (we use Android ID, which is unique per device)
         val deviceId = Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
 
+        // Get MAC address (best-effort; Android 10+ restricts real MAC for privacy,
+        // so we fall back to a deterministic pseudo-MAC derived from the device ID
+        // so each device still shows a unique, consistent identifier).
+        val macAddress = getMacAddress(deviceId)
+
         // Get current timestamp
         val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(Date())
 
@@ -75,7 +81,8 @@ class CellInfoCollector(private val context: Context) {
                         // Cell ID format: LAC-CID (Location Area Code - Cell ID)
                         cellId = "${identity.lac}-${identity.cid}",
                         timestamp = timestamp,
-                        deviceId = deviceId
+                        deviceId = deviceId,
+                        macAddress = macAddress
                     )
                 }
 
@@ -95,7 +102,8 @@ class CellInfoCollector(private val context: Context) {
                         // Cell ID format: LAC-CID
                         cellId = "${identity.lac}-${identity.cid}",
                         timestamp = timestamp,
-                        deviceId = deviceId
+                        deviceId = deviceId,
+                        macAddress = macAddress
                     )
                 }
 
@@ -121,7 +129,8 @@ class CellInfoCollector(private val context: Context) {
                         // Cell ID format: TAC-CI (Tracking Area Code - Cell Identity)
                         cellId = "${identity.tac}-${identity.ci}",
                         timestamp = timestamp,
-                        deviceId = deviceId
+                        deviceId = deviceId,
+                        macAddress = macAddress
                     )
                 }
 
@@ -148,5 +157,29 @@ class CellInfoCollector(private val context: Context) {
             }
         }
         return null
+    }
+
+    /**
+     * Get the MAC address. Android 10+ restricts access to the real Wi-Fi MAC
+     * for privacy reasons, so we try NetworkInterface first and fall back to a
+     * deterministic pseudo-MAC derived from the Android device ID — this keeps
+     * each device's MAC consistent and unique while respecting privacy rules.
+     */
+    private fun getMacAddress(deviceId: String): String {
+        try {
+            val interfaces = NetworkInterface.getNetworkInterfaces().toList()
+            for (nif in interfaces) {
+                if (!nif.name.equals("wlan0", ignoreCase = true)) continue
+                val bytes = nif.hardwareAddress ?: continue
+                if (bytes.isEmpty()) continue
+                return bytes.joinToString(":") { String.format("%02X", it) }
+            }
+        } catch (e: Exception) {
+            // Fall through to pseudo-MAC
+        }
+        // Deterministic pseudo-MAC from device ID (12 hex chars, grouped as MAC format)
+        val hex = (deviceId + "000000000000").take(12).uppercase()
+        return "${hex.substring(0,2)}:${hex.substring(2,4)}:${hex.substring(4,6)}:" +
+                "${hex.substring(6,8)}:${hex.substring(8,10)}:${hex.substring(10,12)}"
     }
 }
