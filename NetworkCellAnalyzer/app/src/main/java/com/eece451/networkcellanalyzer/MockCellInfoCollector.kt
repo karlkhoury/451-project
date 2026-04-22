@@ -46,6 +46,11 @@ class MockCellInfoCollector(context: Context) {
         val signal = randomSignal(currentNetwork)
         val sinr = randomSinr(currentNetwork)
 
+        // Simulate walking around Beirut (AUB campus area, ~33.90 N, 35.48 E)
+        // with small random drift so heatmap shows multiple points
+        val latitude = 33.9000 + Random.nextDouble(-0.005, 0.005)
+        val longitude = 35.4800 + Random.nextDouble(-0.005, 0.005)
+
         return CellInfoData(
             operator = currentOperator,
             signalPower = signal,
@@ -55,7 +60,9 @@ class MockCellInfoCollector(context: Context) {
             cellId = currentCellId,
             timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(Date()),
             deviceId = deviceId,
-            macAddress = macAddress
+            macAddress = macAddress,
+            latitude = latitude,
+            longitude = longitude
         )
     }
 

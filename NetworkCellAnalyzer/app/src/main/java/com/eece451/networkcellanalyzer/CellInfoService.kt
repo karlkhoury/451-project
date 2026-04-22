@@ -38,6 +38,11 @@ class CellInfoService : Service() {
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var monitoringJob: Job? = null
 
+    // Offline queue: if the server is unreachable, store measurements here
+    // and flush them as soon as connectivity is restored.
+    private val offlineQueue: ArrayDeque<CellInfoData> = ArrayDeque()
+    private val maxQueueSize = 500 // ~80 minutes of data at 10s intervals
+
     override fun onCreate() {
         super.onCreate()
         collector = CellInfoCollector(this)
@@ -84,9 +89,21 @@ class CellInfoService : Service() {
                 try {
                     val cellData = if (demoMode) mockCollector.collect() else collector.collect()
                     if (cellData != null) {
-                        // Send to server (runs on IO thread internally)
+                        // Try to send to server
                         val sent = serverClient.sendCellData(cellData)
                         Log.d(TAG, "Cell data sent to server: $sent")
+
+                        if (!sent) {
+                            // Server unreachable — enqueue for later
+                            if (offlineQueue.size >= maxQueueSize) {
+                                offlineQueue.removeFirst() // drop oldest
+                            }
+                            offlineQueue.addLast(cellData)
+                            Log.w(TAG, "Server unreachable, queued (size=${offlineQueue.size})")
+                        } else {
+                            // Server OK — flush any queued measurements
+                            flushOfflineQueue()
+                        }
 
                         // Broadcast to UI so MainActivity can display it
                         val updateIntent = Intent(ACTION_CELL_UPDATE).apply {
@@ -98,6 +115,7 @@ class CellInfoService : Service() {
                             putExtra("cellId", cellData.cellId)
                             putExtra("timestamp", cellData.timestamp)
                             putExtra("serverStatus", sent)
+                            putExtra("queueSize", offlineQueue.size)
                             setPackage(packageName)
                         }
                         sendBroadcast(updateIntent)
@@ -109,6 +127,20 @@ class CellInfoService : Service() {
                 }
                 delay(INTERVAL_MS)
             }
+        }
+    }
+
+    /**
+     * Send any queued measurements that failed to upload earlier.
+     * Stops flushing if a send fails, so we don't thrash.
+     */
+    private suspend fun flushOfflineQueue() {
+        while (offlineQueue.isNotEmpty()) {
+            val next = offlineQueue.first()
+            val ok = serverClient.sendCellData(next)
+            if (!ok) break
+            offlineQueue.removeFirst()
+            Log.d(TAG, "Flushed one queued measurement (remaining=${offlineQueue.size})")
         }
     }
 

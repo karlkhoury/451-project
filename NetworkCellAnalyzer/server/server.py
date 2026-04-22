@@ -60,14 +60,21 @@ def init_db():
             device_id TEXT NOT NULL,
             ip_address TEXT,
             mac_address TEXT,
+            latitude REAL,
+            longitude REAL,
             received_at TEXT NOT NULL
         )
     """)
-    # Migration: add mac_address to existing DBs that predate this column
-    try:
-        conn.execute("ALTER TABLE celldata ADD COLUMN mac_address TEXT")
-    except sqlite3.OperationalError:
-        pass  # Column already exists
+    # Migrations: add columns to existing DBs that predate them
+    for col, col_type in [
+        ("mac_address", "TEXT"),
+        ("latitude", "REAL"),
+        ("longitude", "REAL"),
+    ]:
+        try:
+            conn.execute(f"ALTER TABLE celldata ADD COLUMN {col} {col_type}")
+        except sqlite3.OperationalError:
+            pass
     conn.commit()
     conn.close()
 
@@ -113,8 +120,9 @@ def receive_celldata():
         conn.execute(
             """INSERT INTO celldata
                (operator, signal_power, sinr, network_type, frequency_band,
-                cell_id, timestamp, device_id, ip_address, mac_address, received_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                cell_id, timestamp, device_id, ip_address, mac_address,
+                latitude, longitude, received_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 data.get("operator", "Unknown"),
                 data.get("signalPower", 0),
@@ -126,6 +134,8 @@ def receive_celldata():
                 data.get("deviceId", "unknown"),
                 client_ip,
                 mac_address,
+                data.get("latitude"),       # Can be null
+                data.get("longitude"),      # Can be null
                 now,
             ),
         )
@@ -227,17 +237,14 @@ def export_csv():
 
     buf = io.StringIO()
     writer = csv.writer(buf)
-    writer.writerow([
+    cols = [
         "id", "operator", "signal_power", "sinr", "network_type",
         "frequency_band", "cell_id", "timestamp", "device_id",
-        "ip_address", "mac_address", "received_at"
-    ])
+        "ip_address", "mac_address", "latitude", "longitude", "received_at"
+    ]
+    writer.writerow(cols)
     for r in rows:
-        writer.writerow([r[k] for k in [
-            "id", "operator", "signal_power", "sinr", "network_type",
-            "frequency_band", "cell_id", "timestamp", "device_id",
-            "ip_address", "mac_address", "received_at"
-        ]])
+        writer.writerow([r[k] if k in r.keys() else "" for k in cols])
 
     return Response(
         buf.getvalue(),
@@ -273,6 +280,40 @@ def compare_operators():
     ])
 
 
+# ==================== HEATMAP DATA ====================
+
+@app.route("/api/heatmap")
+def heatmap_data():
+    """Return recent geo-located measurements for the dashboard map."""
+    conn = get_db()
+    rows = conn.execute(
+        """SELECT latitude, longitude, signal_power, network_type, operator, timestamp
+           FROM celldata
+           WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+           ORDER BY received_at DESC
+           LIMIT 500"""
+    ).fetchall()
+    conn.close()
+    return jsonify([
+        {
+            "lat": r["latitude"],
+            "lng": r["longitude"],
+            "signal": r["signal_power"],
+            "network": r["network_type"],
+            "operator": r["operator"],
+            "timestamp": r["timestamp"],
+        }
+        for r in rows
+    ])
+
+
+# ==================== ABOUT ====================
+
+@app.route("/about")
+def about():
+    return render_template_string(ABOUT_HTML)
+
+
 # ==================== WEB DASHBOARD (Server Interface) ====================
 
 DASHBOARD_HTML = """
@@ -281,30 +322,109 @@ DASHBOARD_HTML = """
 <head>
     <title>Network Cell Analyzer - Server Dashboard</title>
     <meta http-equiv="refresh" content="10">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; }
-        h1 { color: #6200EE; }
-        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background: #6200EE; color: white; }
-        tr:nth-child(even) { background: #f9f9f9; }
-        .stat-box { background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 10px 0; }
-        .connected { color: green; font-weight: bold; }
-        .disconnected { color: gray; }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 1100px; margin: 40px auto; padding: 0 20px;
+            background: #f7f7fb; color: #222;
+        }
+        h1 { color: #6200EE; margin-bottom: 6px; }
+        h2 { color: #333; margin-top: 30px; border-bottom: 2px solid #eaeaea; padding-bottom: 6px; }
+        nav a {
+            display: inline-block; padding: 6px 14px; margin-right: 8px;
+            background: white; border: 1px solid #ddd; border-radius: 20px;
+            color: #6200EE; text-decoration: none; font-size: 14px;
+        }
+        nav a:hover { background: #6200EE; color: white; border-color: #6200EE; }
+        .stat-box {
+            background: linear-gradient(135deg, #6200EE 0%, #9C27B0 100%);
+            color: white; padding: 20px; border-radius: 12px; margin: 16px 0;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 14px rgba(98,0,238,0.25);
+        }
+        .stat-box h3 { margin: 0; font-size: 22px; }
+        .download-btn {
+            background: white; color: #6200EE; padding: 10px 18px;
+            border-radius: 8px; text-decoration: none; font-weight: bold;
+            transition: transform 0.15s;
+        }
+        .download-btn:hover { transform: scale(1.05); }
+        table {
+            border-collapse: collapse; width: 100%; margin: 16px 0;
+            background: white; border-radius: 8px; overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        th, td { border-bottom: 1px solid #eaeaea; padding: 12px; text-align: left; }
+        th { background: #6200EE; color: white; font-weight: 600; }
+        tr:nth-child(even) td { background: #fafafa; }
+        .connected { color: #2E7D32; font-weight: bold; }
+        .disconnected { color: #999; }
+        .card-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px; margin: 16px 0;
+        }
+        .op-card {
+            background: white; border-radius: 12px; padding: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-left: 5px solid #6200EE;
+        }
+        .op-card h3 { margin: 0 0 10px 0; color: #6200EE; }
+        .op-card .metric { display: flex; justify-content: space-between; margin: 6px 0; }
+        .op-card .metric .label { color: #888; font-size: 13px; }
+        .op-card .metric .value { font-weight: bold; }
+        #map {
+            height: 400px; border-radius: 12px; margin: 16px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .map-legend {
+            background: white; padding: 8px 12px; border-radius: 6px;
+            font-size: 13px; box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+        }
+        .legend-dot { display: inline-block; width: 12px; height: 12px;
+                      border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+        footer { margin-top: 40px; color: #888; font-size: 13px; text-align: center; }
     </style>
 </head>
 <body>
-    <h1>Network Cell Analyzer - Server Dashboard</h1>
+    <h1>Network Cell Analyzer</h1>
+    <p style="color:#666;margin-top:0;">Centralized dashboard for cellular network measurements</p>
+
+    <nav>
+        <a href="/">Dashboard</a>
+        <a href="/api/export.csv">Download CSV</a>
+        <a href="/api/stats">Stats API</a>
+        <a href="/about">About</a>
+    </nav>
 
     <div class="stat-box">
-        <h3>Connected Devices: {{ device_count }}</h3>
-        <p style="margin-top:10px;">
-            <a href="/api/export.csv"
-               style="background:#6200EE;color:white;padding:8px 14px;border-radius:6px;text-decoration:none;font-weight:bold;">
-               &#x2B07; Download All Data (CSV)
-            </a>
-        </p>
+        <h3>&#x1F4F1; Active Devices: {{ device_count }}</h3>
+        <a href="/api/export.csv" class="download-btn">&#x2B07; Download CSV</a>
     </div>
+
+    {% if operator_comparison %}
+    <h2>Operator Comparison</h2>
+    <div class="card-grid">
+        {% for op in operator_comparison %}
+        <div class="op-card">
+            <h3>{{ op.operator }}</h3>
+            <div class="metric"><span class="label">Samples</span><span class="value">{{ op.samples }}</span></div>
+            <div class="metric"><span class="label">Avg Signal</span><span class="value">{{ op.avg_signal_dbm }} dBm</span></div>
+            <div class="metric"><span class="label">Avg SINR</span><span class="value">{{ op.avg_sinr_db if op.avg_sinr_db is not none else 'N/A' }} dB</span></div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <h2>&#x1F30D; Signal Heatmap</h2>
+    <p style="color:#666;font-size:14px;margin-top:0;">
+        Color-coded locations of recent measurements —
+        <span class="legend-dot" style="background:#2E7D32;"></span>strong
+        <span class="legend-dot" style="background:#F9A825;margin-left:10px;"></span>medium
+        <span class="legend-dot" style="background:#C62828;margin-left:10px;"></span>weak.
+    </p>
+    <div id="map"></div>
 
     <h2>Device List (Currently and Previously Connected)</h2>
     <table>
@@ -352,7 +472,115 @@ DASHBOARD_HTML = """
         {% endfor %}
     </table>
 
-    <p><em>Page auto-refreshes every 10 seconds.</em></p>
+    <footer>
+        Auto-refreshes every 10 seconds &middot;
+        <a href="https://github.com/karlkhoury/451-project" style="color:#6200EE;">Source on GitHub</a>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Initialize map centered on Beirut by default
+        const map = L.map('map').setView([33.8938, 35.5018], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        function colorFor(dbm) {
+            if (dbm >= -80) return '#2E7D32';   // strong (green)
+            if (dbm >= -95) return '#F9A825';   // medium (amber)
+            return '#C62828';                    // weak (red)
+        }
+
+        fetch('/api/heatmap')
+            .then(r => r.json())
+            .then(points => {
+                if (!points.length) return;
+                const group = L.featureGroup();
+                points.forEach(p => {
+                    const marker = L.circleMarker([p.lat, p.lng], {
+                        radius: 7,
+                        fillColor: colorFor(p.signal),
+                        color: '#fff',
+                        weight: 1.5,
+                        fillOpacity: 0.85
+                    }).bindPopup(
+                        `<b>${p.operator}</b> (${p.network})<br>` +
+                        `Signal: ${p.signal} dBm<br>` +
+                        `<small>${p.timestamp}</small>`
+                    );
+                    group.addLayer(marker);
+                });
+                group.addTo(map);
+                map.fitBounds(group.getBounds().pad(0.3));
+            })
+            .catch(() => { /* no geo data yet */ });
+    </script>
+</body>
+</html>
+"""
+
+
+ABOUT_HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>About - Network Cell Analyzer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 800px; margin: 60px auto; padding: 0 20px;
+            background: #f7f7fb; color: #222; line-height: 1.6;
+        }
+        h1 { color: #6200EE; }
+        .pill {
+            display: inline-block; background: #6200EE; color: white;
+            padding: 3px 10px; border-radius: 12px; font-size: 13px; margin: 2px;
+        }
+        a.btn {
+            display: inline-block; background: #6200EE; color: white;
+            padding: 10px 18px; border-radius: 8px; text-decoration: none;
+            font-weight: bold; margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>About This Project</h1>
+    <p>
+        <strong>Network Cell Analyzer</strong> is a distributed system for
+        crowdsourced cellular network measurement, built for EECE 451
+        (Mobile Communications) at the American University of Beirut, Spring 2026.
+    </p>
+    <p>
+        An Android app reads real-time cell data from the TelephonyManager API
+        every 10 seconds and streams it to a Flask server hosted on Render.
+        The server stores measurements in SQLite, computes statistics, and
+        exposes this live dashboard with a geographic heatmap.
+    </p>
+    <p>
+        <span class="pill">Kotlin</span>
+        <span class="pill">Android</span>
+        <span class="pill">Flask</span>
+        <span class="pill">SQLite</span>
+        <span class="pill">Gunicorn</span>
+        <span class="pill">Render</span>
+        <span class="pill">Leaflet.js</span>
+    </p>
+    <h2>Features</h2>
+    <ul>
+        <li>Real-time cell data collection (2G / 3G / 4G / 5G)</li>
+        <li>Live in-app signal chart</li>
+        <li>Network quality grade (A / B / C / D)</li>
+        <li>GPS-tagged measurements with heatmap visualization</li>
+        <li>Offline queue — buffers measurements when server is unreachable</li>
+        <li>Operator comparison view (Alfa vs touch)</li>
+        <li>CSV export of all measurements</li>
+        <li>Statistics over any date range</li>
+        <li>Demo mode for emulator testing</li>
+    </ul>
+    <a class="btn" href="/">&larr; Back to Dashboard</a>
+    <a class="btn" href="https://github.com/karlkhoury/451-project"
+       style="background:#333;">View Source on GitHub</a>
 </body>
 </html>
 """
@@ -387,13 +615,34 @@ def dashboard():
     recent = conn.execute(
         "SELECT * FROM celldata ORDER BY received_at DESC LIMIT 20"
     ).fetchall()
+    # Operator comparison for the dashboard card grid
+    op_rows = conn.execute(
+        """SELECT operator,
+                  COUNT(*) as samples,
+                  ROUND(AVG(signal_power), 1) as avg_signal,
+                  ROUND(AVG(sinr), 1) as avg_sinr
+           FROM celldata
+           GROUP BY operator
+           ORDER BY samples DESC"""
+    ).fetchall()
     conn.close()
+
+    operator_comparison = [
+        {
+            "operator": r["operator"],
+            "samples": r["samples"],
+            "avg_signal_dbm": r["avg_signal"],
+            "avg_sinr_db": r["avg_sinr"],
+        }
+        for r in op_rows
+    ]
 
     return render_template_string(
         DASHBOARD_HTML,
         device_count=active_count,
         devices=devices,
         recent=recent,
+        operator_comparison=operator_comparison,
     )
 
 

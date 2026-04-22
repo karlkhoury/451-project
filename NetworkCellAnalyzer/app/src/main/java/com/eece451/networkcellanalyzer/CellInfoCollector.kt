@@ -3,6 +3,8 @@ package com.eece451.networkcellanalyzer
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationManager
 import android.os.Build
 import android.provider.Settings
 import android.telephony.*
@@ -29,6 +31,34 @@ class CellInfoCollector(private val context: Context) {
     private val telephonyManager =
         context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
 
+    private val locationManager =
+        context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+    /**
+     * Reads the last known GPS/network location.
+     * Falls back gracefully if location is unavailable or permission missing.
+     */
+    private fun getLastKnownLocation(): Location? {
+        try {
+            if (ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) return null
+            val providers = listOf(
+                LocationManager.GPS_PROVIDER,
+                LocationManager.NETWORK_PROVIDER,
+                LocationManager.PASSIVE_PROVIDER
+            )
+            for (provider in providers) {
+                val loc = locationManager.getLastKnownLocation(provider) ?: continue
+                return loc
+            }
+        } catch (_: SecurityException) {
+            return null
+        }
+        return null
+    }
+
     /**
      * Collects current cell information.
      * Returns null if permissions are missing or no cell info is available.
@@ -54,6 +84,11 @@ class CellInfoCollector(private val context: Context) {
 
         // Get current timestamp
         val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(Date())
+
+        // Get GPS coordinates (nullable — phone may have location off)
+        val location = getLastKnownLocation()
+        val latitude = location?.latitude
+        val longitude = location?.longitude
 
         // getAllCellInfo() returns info about ALL cells the phone can see.
         // We want only the one the phone is REGISTERED to (i.e., actively connected).
@@ -82,7 +117,9 @@ class CellInfoCollector(private val context: Context) {
                         cellId = "${identity.lac}-${identity.cid}",
                         timestamp = timestamp,
                         deviceId = deviceId,
-                        macAddress = macAddress
+                        macAddress = macAddress,
+                        latitude = latitude,
+                        longitude = longitude
                     )
                 }
 
@@ -103,7 +140,9 @@ class CellInfoCollector(private val context: Context) {
                         cellId = "${identity.lac}-${identity.cid}",
                         timestamp = timestamp,
                         deviceId = deviceId,
-                        macAddress = macAddress
+                        macAddress = macAddress,
+                        latitude = latitude,
+                        longitude = longitude
                     )
                 }
 
@@ -130,7 +169,9 @@ class CellInfoCollector(private val context: Context) {
                         cellId = "${identity.tac}-${identity.ci}",
                         timestamp = timestamp,
                         deviceId = deviceId,
-                        macAddress = macAddress
+                        macAddress = macAddress,
+                        latitude = latitude,
+                        longitude = longitude
                     )
                 }
 
@@ -151,7 +192,9 @@ class CellInfoCollector(private val context: Context) {
                             cellId = "${identity.tac}-${identity.nci}",
                             timestamp = timestamp,
                             deviceId = deviceId,
-                            macAddress = macAddress
+                            macAddress = macAddress,
+                            latitude = latitude,
+                            longitude = longitude
                         )
                     } else null
                 }

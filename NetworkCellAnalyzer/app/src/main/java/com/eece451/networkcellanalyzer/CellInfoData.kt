@@ -23,5 +23,7 @@ data class CellInfoData(
     val cellId: String,
     val timestamp: String,
     val deviceId: String,
-    val macAddress: String
+    val macAddress: String,
+    val latitude: Double? = null,
+    val longitude: Double? = null
 )

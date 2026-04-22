@@ -52,6 +52,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvTimestamp: TextView
     private lateinit var tvQualityGrade: TextView
     private lateinit var switchDemoMode: SwitchMaterial
+    private lateinit var signalChart: SignalChartView
 
     /**
      * BroadcastReceiver: listens for updates from CellInfoService.
@@ -82,10 +83,17 @@ class MainActivity : AppCompatActivity() {
                 val sinrForGrade = if (sinr != Int.MAX_VALUE) sinr else null
                 updateQualityGrade(signalPower, sinrForGrade)
 
-                // Show server connection status
+                // Update the live signal chart
+                if (signalPower != Int.MAX_VALUE) signalChart.addValue(signalPower)
+
+                // Show server connection status (with offline-queue size if any)
                 val serverOk = intent.getBooleanExtra("serverStatus", false)
-                tvStatus.text = if (serverOk) "Status: Running (Server Connected)"
-                else "Status: Running (Server Unreachable)"
+                val queueSize = intent.getIntExtra("queueSize", 0)
+                tvStatus.text = when {
+                    serverOk && queueSize == 0 -> "Status: Running (Server Connected)"
+                    serverOk && queueSize > 0  -> "Status: Flushing queue ($queueSize left)"
+                    else                       -> "Status: Offline — queued $queueSize measurements"
+                }
                 tvStatus.setTextColor(
                     ContextCompat.getColor(
                         this@MainActivity,
@@ -114,6 +122,7 @@ class MainActivity : AppCompatActivity() {
         tvTimestamp = findViewById(R.id.tvTimestamp)
         tvQualityGrade = findViewById(R.id.tvQualityGrade)
         switchDemoMode = findViewById(R.id.switchDemoMode)
+        signalChart = findViewById(R.id.signalChart)
 
         // Start/Stop button click handler
         btnStartStop.setOnClickListener {
