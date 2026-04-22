@@ -27,8 +27,11 @@ class CellInfoService : Service() {
         const val EXTRA_SERVER_URL = "server_url"
         const val EXTRA_DEMO_MODE = "demo_mode"
         const val CHANNEL_ID = "cell_monitor_channel"
+        const val ALERT_CHANNEL_ID = "cell_alert_channel"
         private const val TAG = "CellInfoService"
         private const val INTERVAL_MS = 10_000L // 10 seconds
+        private const val BAD_SIGNAL_THRESHOLD = -100 // dBm — below this = weak
+        private const val ALERT_COOLDOWN_MS = 120_000L // 2 minutes between alerts
     }
 
     private lateinit var collector: CellInfoCollector
@@ -42,6 +45,8 @@ class CellInfoService : Service() {
     // and flush them as soon as connectivity is restored.
     private val offlineQueue: ArrayDeque<CellInfoData> = ArrayDeque()
     private val maxQueueSize = 500 // ~80 minutes of data at 10s intervals
+
+    private var lastAlertTime = 0L
 
     override fun onCreate() {
         super.onCreate()
@@ -105,6 +110,9 @@ class CellInfoService : Service() {
                             flushOfflineQueue()
                         }
 
+                        // Alert user if signal is really bad
+                        maybeAlertBadSignal(cellData)
+
                         // Broadcast to UI so MainActivity can display it
                         val updateIntent = Intent(ACTION_CELL_UPDATE).apply {
                             putExtra("operator", cellData.operator)
@@ -153,21 +161,58 @@ class CellInfoService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     /**
-     * Creates a notification channel (required on Android 8.0+).
-     * Think of channels as categories of notifications that users can control.
+     * Creates two notification channels (required on Android 8.0+):
+     *  - cell_monitor_channel: silent ongoing "monitoring is active" notification
+     *  - cell_alert_channel:   higher-importance alerts when signal drops
      */
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Cell Monitoring",
-                NotificationManager.IMPORTANCE_LOW // Low = no sound, just shows in status bar
-            ).apply {
-                description = "Shows that cell monitoring is active"
-            }
             val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
+
+            manager.createNotificationChannel(
+                NotificationChannel(
+                    CHANNEL_ID, "Cell Monitoring", NotificationManager.IMPORTANCE_LOW
+                ).apply { description = "Shows that cell monitoring is active" }
+            )
+            manager.createNotificationChannel(
+                NotificationChannel(
+                    ALERT_CHANNEL_ID, "Signal Alerts", NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "Warns when cellular signal drops too low"
+                    enableVibration(true)
+                }
+            )
         }
+    }
+
+    /**
+     * Fires a user-visible notification when signal power is below the threshold.
+     * Rate-limited so we don't spam — max one alert every ALERT_COOLDOWN_MS.
+     */
+    private fun maybeAlertBadSignal(data: CellInfoData) {
+        if (data.signalPower >= BAD_SIGNAL_THRESHOLD) return
+        val now = System.currentTimeMillis()
+        if (now - lastAlertTime < ALERT_COOLDOWN_MS) return
+        lastAlertTime = now
+
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0,
+            Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val alert = Notification.Builder(this, ALERT_CHANNEL_ID)
+            .setContentTitle("Weak cellular signal")
+            .setContentText("${data.networkType} · ${data.operator} · ${data.signalPower} dBm")
+            .setSmallIcon(android.R.drawable.stat_sys_warning)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .build()
+
+        val manager = getSystemService(NotificationManager::class.java)
+        // Use a non-zero id so it doesn't collide with the foreground notification (id 1)
+        manager.notify(42, alert)
+        Log.w(TAG, "Issued bad-signal alert at ${data.signalPower} dBm")
     }
 
     private fun buildNotification(): Notification {

@@ -70,7 +70,7 @@ class MainActivity : AppCompatActivity() {
                 tvSignalPower.text = if (signalPower != Int.MAX_VALUE) "$signalPower dBm" else "-- dBm"
 
                 val sinr = intent.getIntExtra("sinr", Int.MAX_VALUE)
-                tvSinr.text = if (sinr != Int.MAX_VALUE) "$sinr dB" else "N/A"
+                tvSinr.text = if (sinr != Int.MAX_VALUE) "SINR: $sinr dB" else "SINR: N/A"
 
                 tvCellId.text = intent.getStringExtra("cellId") ?: "--"
 

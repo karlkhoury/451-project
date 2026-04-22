@@ -392,9 +392,7 @@ DASHBOARD_HTML = """
     <p style="color:#666;margin-top:0;">Centralized dashboard for cellular network measurements</p>
 
     <nav>
-        <a href="/">Dashboard</a>
         <a href="/api/export.csv">Download CSV</a>
-        <a href="/api/stats">Stats API</a>
         <a href="/about">About</a>
     </nav>
 

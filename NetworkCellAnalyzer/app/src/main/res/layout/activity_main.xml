@@ -1,269 +1,385 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Main screen layout:
-    - Shows real-time cell information (operator, signal, network type, etc.)
-    - Has a server IP input field so the user can point to their server
-    - Start/Stop button to control the monitoring service
-    - Button to open the Statistics screen
+    Redesigned main screen:
+    - Purple gradient hero header with app title
+    - Config card: server URL, demo toggle, start/stop, statistics button
+    - Status line (color-coded)
+    - Hero signal card: BIG operator + network + signal power, colored by quality
+    - Signal chart card
+    - Cell details card with emoji "icons" for each metric
 -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:background="@color/white">
+    android:background="#F5F6FA"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Title -->
-        <TextView
+        <!-- ===== Gradient header banner ===== -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Network Cell Analyzer"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:textAlignment="center"
-            android:layout_marginBottom="16dp" />
+            android:background="@drawable/bg_header_gradient"
+            android:orientation="vertical"
+            android:padding="24dp">
 
-        <!-- Server IP configuration -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Server URL (e.g. http://192.168.1.100:5000)"
-            android:layout_marginBottom="8dp">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editServerUrl"
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="https://four51-project.onrender.com"
-                android:inputType="textUri" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:text="\uD83D\uDCE1  Network Cell Analyzer"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
 
-        <!-- Demo mode toggle (useful for testing on emulators) -->
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/switchDemoMode"
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Real-time cellular intelligence"
+                android:textSize="13sp"
+                android:textColor="#E8DCFF"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+
+        <!-- ===== Content padding wrapper ===== -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Demo Mode (simulated cell data)"
-            android:layout_marginBottom="8dp" />
+            android:orientation="vertical"
+            android:padding="16dp">
 
-        <!-- Start / Stop button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnStartStop"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Start Monitoring"
-            android:layout_marginBottom="8dp" />
+            <!-- ===== Configuration card ===== -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="3dp"
+                android:layout_marginBottom="12dp">
 
-        <!-- View Statistics button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnStatistics"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="View Statistics"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-            android:layout_marginBottom="16dp" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-        <!-- Status indicator -->
-        <TextView
-            android:id="@+id/tvStatus"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Status: Stopped"
-            android:textSize="14sp"
-            android:textColor="@color/signal_bad"
-            android:layout_marginBottom="16dp" />
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Server URL"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_marginBottom="8dp">
 
-        <!-- Divider -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#E0E0E0"
-            android:layout_marginBottom="16dp" />
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/editServerUrl"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="https://four51-project.onrender.com"
+                            android:inputType="textUri" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Real-time Cell Info Card -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            app:cardElevation="4dp"
-            app:cardCornerRadius="8dp"
-            xmlns:app="http://schemas.android.com/apk/res-auto">
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchDemoMode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Demo Mode (simulated cell data)"
+                        android:layout_marginBottom="12dp" />
 
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnStartStop"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:text="Start Monitoring"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="12dp"
+                        android:layout_marginBottom="8dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnStatistics"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:text="\uD83D\uDCCA  View Statistics"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        app:cornerRadius="12dp" />
+
+                    <TextView
+                        android:id="@+id/tvStatus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Status: Stopped"
+                        android:textSize="13sp"
+                        android:textColor="@color/signal_bad"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- ===== Hero signal card (gradient) ===== -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@drawable/bg_hero_gradient"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="20dp"
+                android:layout_marginBottom="12dp"
+                android:elevation="4dp">
 
-                <TextView
+                <!-- Operator + network row -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Real-Time Cell Information"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="12dp" />
+                    android:orientation="horizontal">
 
-                <!-- Signal power chart (custom view, shows last 20 samples) -->
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Signal Power Over Time"
-                    android:textSize="12sp"
-                    android:textColor="#888888"
-                    android:layout_marginTop="4dp" />
-                <com.eece451.networkcellanalyzer.SignalChartView
-                    android:id="@+id/signalChart"
-                    android:layout_width="match_parent"
-                    android:layout_height="180dp"
-                    android:layout_marginBottom="12dp" />
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-                <!-- Network quality grade badge -->
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="OPERATOR"
+                            android:textSize="11sp"
+                            android:textColor="#E8DCFF"
+                            android:letterSpacing="0.15" />
+
+                        <TextView
+                            android:id="@+id/tvOperator"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="--"
+                            android:textSize="28sp"
+                            android:textStyle="bold"
+                            android:textColor="#FFFFFF" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="end">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="NETWORK"
+                            android:textSize="11sp"
+                            android:textColor="#E8DCFF"
+                            android:letterSpacing="0.15" />
+
+                        <TextView
+                            android:id="@+id/tvNetworkType"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--"
+                            android:textSize="28sp"
+                            android:textStyle="bold"
+                            android:textColor="#FFFFFF" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="#66FFFFFF"
+                    android:layout_marginTop="14dp"
+                    android:layout_marginBottom="14dp" />
+
+                <!-- Signal + quality grade row -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:background="#F5F5F5"
-                    android:padding="12dp"
-                    android:layout_marginBottom="12dp">
+                    android:gravity="center_vertical">
 
-                    <TextView
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="SIGNAL POWER"
+                            android:textSize="11sp"
+                            android:textColor="#E8DCFF"
+                            android:letterSpacing="0.15" />
+
+                        <TextView
+                            android:id="@+id/tvSignalPower"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="-- dBm"
+                            android:textSize="34sp"
+                            android:textStyle="bold"
+                            android:textColor="#FFFFFF" />
+
+                        <TextView
+                            android:id="@+id/tvSinr"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="SINR: -- dB"
+                            android:textSize="13sp"
+                            android:textColor="#E8DCFF"
+                            android:layout_marginTop="2dp" />
+                    </LinearLayout>
+
+                    <!-- Big quality grade badge -->
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Network Quality"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:layout_weight="1" />
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="QUALITY"
+                            android:textSize="10sp"
+                            android:textColor="#E8DCFF"
+                            android:letterSpacing="0.15"
+                            android:layout_marginBottom="4dp"
+                            android:gravity="center" />
+
+                        <TextView
+                            android:id="@+id/tvQualityGrade"
+                            android:layout_width="64dp"
+                            android:layout_height="64dp"
+                            android:text="-"
+                            android:textSize="36sp"
+                            android:textStyle="bold"
+                            android:textColor="#FFFFFF"
+                            android:gravity="center"
+                            android:background="#66FFFFFF" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ===== Signal chart card ===== -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="3dp"
+                android:layout_marginBottom="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
                     <TextView
-                        android:id="@+id/tvQualityGrade"
-                        android:layout_width="56dp"
-                        android:layout_height="56dp"
-                        android:text="-"
-                        android:textSize="28sp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="\uD83D\uDCC8  Signal Power Over Time"
+                        android:textSize="14sp"
                         android:textStyle="bold"
-                        android:textColor="#FFFFFF"
-                        android:gravity="center"
-                        android:background="#9E9E9E" />
+                        android:textColor="#333333"
+                        android:layout_marginBottom="8dp" />
+
+                    <com.eece451.networkcellanalyzer.SignalChartView
+                        android:id="@+id/signalChart"
+                        android:layout_width="match_parent"
+                        android:layout_height="180dp" />
                 </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-                <!-- Operator -->
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Operator"
-                    android:textSize="12sp"
-                    android:textColor="#888888" />
-                <TextView
-                    android:id="@+id/tvOperator"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="--"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
+            <!-- ===== Details card ===== -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="3dp"
+                android:layout_marginBottom="24dp">
 
-                <!-- Network Type -->
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Network Type"
-                    android:textSize="12sp"
-                    android:textColor="#888888" />
-                <TextView
-                    android:id="@+id/tvNetworkType"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="--"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                <!-- Signal Power -->
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Signal Power"
-                    android:textSize="12sp"
-                    android:textColor="#888888" />
-                <TextView
-                    android:id="@+id/tvSignalPower"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="-- dBm"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="\uD83D\uDCCB  Cell Details"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#333333"
+                        android:layout_marginBottom="12dp" />
 
-                <!-- SINR / SNR -->
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="SINR / SNR"
-                    android:textSize="12sp"
-                    android:textColor="#888888" />
-                <TextView
-                    android:id="@+id/tvSinr"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="-- dB"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
+                    <!-- Cell ID row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="10dp">
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="\uD83C\uDD94  Cell ID"
+                            android:textSize="14sp"
+                            android:textColor="#666666" />
+                        <TextView
+                            android:id="@+id/tvCellId"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
-                <!-- Cell ID -->
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Cell ID"
-                    android:textSize="12sp"
-                    android:textColor="#888888" />
-                <TextView
-                    android:id="@+id/tvCellId"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="--"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
+                    <!-- Frequency band row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="10dp">
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="\uD83C\uDF9B\uFE0F  Frequency Band"
+                            android:textSize="14sp"
+                            android:textColor="#666666" />
+                        <TextView
+                            android:id="@+id/tvFrequencyBand"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
-                <!-- Frequency Band -->
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Frequency Band"
-                    android:textSize="12sp"
-                    android:textColor="#888888" />
-                <TextView
-                    android:id="@+id/tvFrequencyBand"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="--"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp" />
+                    <!-- Timestamp row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="\u23F0  Last Updated"
+                            android:textSize="14sp"
+                            android:textColor="#666666" />
+                        <TextView
+                            android:id="@+id/tvTimestamp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-                <!-- Timestamp -->
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Last Updated"
-                    android:textSize="12sp"
-                    android:textColor="#888888" />
-                <TextView
-                    android:id="@+id/tvTimestamp"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="--"
-                    android:textSize="14sp"
-                    android:layout_marginBottom="4dp" />
-
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>
