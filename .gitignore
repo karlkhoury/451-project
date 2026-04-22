@@ -1,15 +1,14 @@
 # Android build files
 *.iml
 .gradle/
-/local.properties
+**/local.properties
 .idea/
 *.apk
 *.aab
 *.ap_
 *.dex
-/build/
-/app/build/
-/captures
+**/build/
+**/captures/
 .externalNativeBuild/
 .cxx/
 *.hprof

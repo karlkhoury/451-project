@@ -1,0 +1,410 @@
+================================================================================
+  NETWORK CELL ANALYZER — POWERPOINT PRESENTATION BRIEF
+  EECE 451 — Spring 2026 — American University of Beirut
+  Student: Karl Khoury
+================================================================================
+
+PROMPT FOR THE AI CREATING THE POWERPOINT:
+Use this brief to generate a visually stunning, creative, animated, and
+interactive PowerPoint presentation. Apply the design direction section
+exactly. Every slide should have entrance animations, smooth transitions
+between slides (Morph or Fade), and use modern iconography and diagrams.
+The audience is a university professor + classmates evaluating a graded
+project, so the tone is professional but engaging — not corporate-bland.
+
+================================================================================
+  1. PRESENTATION METADATA
+================================================================================
+
+TITLE: Network Cell Analyzer
+SUBTITLE: A Cloud-Connected Android App for Real-Time Cellular Network Analysis
+COURSE: EECE 451 — Mobile Communications
+SEMESTER: Spring 2026
+UNIVERSITY: American University of Beirut
+TARGET LENGTH: 12–15 slides
+TARGET DURATION: 8–10 minutes spoken
+
+================================================================================
+  2. DESIGN DIRECTION (IMPORTANT — FOLLOW EXACTLY)
+================================================================================
+
+OVERALL VIBE: Modern, tech-forward, slightly futuristic. Think "Apple keynote
+meets cellular network diagrams." Dark mode by default with neon purple
+accents.
+
+COLOR PALETTE:
+- Background: Deep navy #0F0F23 or near-black #1A1A2E
+- Primary accent: Electric purple #6C63FF
+- Secondary accent: Cyan #00D9FF
+- Success/data: Neon green #00FF9D
+- Warning: Amber #FFB547
+- Text primary: White #FFFFFF
+- Text muted: Light gray #B0B0C0
+
+TYPOGRAPHY:
+- Titles: Bold sans-serif, large (54pt+), tight letter-spacing. Use
+  "Montserrat Black" or "Poppins ExtraBold" if available.
+- Body: Clean sans-serif, 22–28pt. "Inter" or "Segoe UI" fallback.
+- Code / monospace: "JetBrains Mono" or "Consolas" for any code snippets.
+
+ANIMATIONS (apply everywhere):
+- Slide transitions: MORPH between slides that share visual elements,
+  otherwise smooth FADE.
+- Entrance: FADE IN + SLIGHT SLIDE UP for text blocks (stagger by 0.2s).
+- Charts & diagrams: WIPE or GROW on reveal.
+- Emphasize key numbers/stats with a PULSE or GLOW.
+- Avoid: bounce, spin, zoom-in-and-out — looks cheap.
+
+VISUAL ELEMENTS:
+- Use icons from Font Awesome / Lucide / Material Icons throughout
+  (cell tower, smartphone, cloud, database, signal bars, etc.)
+- Include at least 2 FULL-SCREEN diagram slides with architecture flow
+- Include a LIVE DASHBOARD screenshot mockup somewhere
+- Add subtle particle or grid background overlay to reinforce "network"
+  theme (low opacity so it doesn't distract)
+
+DO NOT:
+- Use clip art or stock photos of generic "businesspeople"
+- Use Comic Sans or decorative fonts
+- Cram text into slides — one idea per slide
+
+================================================================================
+  3. WHAT THE PROJECT IS — ONE-LINE AND ONE-PARAGRAPH SUMMARIES
+================================================================================
+
+ONE LINER:
+"An Android app that monitors real-time cellular network quality (2G/3G/4G/5G)
+and streams the data to a cloud-hosted Flask server for centralized analysis."
+
+ONE PARAGRAPH:
+Network Cell Analyzer is a two-part distributed system consisting of a native
+Android application (written in Kotlin) and a Python Flask backend hosted
+24/7 on Render cloud. The Android app reads cellular network information
+directly from the device's TelephonyManager API every 10 seconds —
+capturing operator, signal strength, network type (2G/3G/4G/5G), SINR,
+frequency band, and cell ID — and transmits each measurement to the cloud
+server over HTTPS. The server persists all measurements in a SQLite database,
+tracks connected devices in real time with IP and MAC addresses, and exposes
+both a REST API for statistics queries and a live-updating web dashboard.
+Users can select any date range in the mobile app and fetch comprehensive
+statistics including average connectivity time per operator and network
+type, average signal power per device and network type, and SINR averages.
+
+================================================================================
+  4. SUGGESTED SLIDE-BY-SLIDE OUTLINE
+================================================================================
+
+--------------------------------------------------------------------------------
+SLIDE 1 — TITLE SLIDE
+--------------------------------------------------------------------------------
+Title: "Network Cell Analyzer"
+Subtitle: "Real-Time Cellular Network Intelligence, from Phone to Cloud"
+Below: EECE 451 · Spring 2026 · AUB
+Author: Karl Khoury
+
+VISUAL: Full-bleed background showing abstract cellular wave patterns or
+a stylized world map with connection lines radiating from Beirut.
+Large glowing app logo/icon centered.
+
+ANIMATION: Title fades in with slight blur-to-focus effect. Subtitle
+slides up 0.3s later. Background particles drift slowly.
+
+--------------------------------------------------------------------------------
+SLIDE 2 — THE PROBLEM
+--------------------------------------------------------------------------------
+Title: "The Problem"
+
+Content (3 bullets, each with an icon):
+• Cellular network quality varies wildly by location, operator, and time
+• Network operators rely on expensive drive-testing for measurements
+• Smartphones already have all the APIs needed — they just need an app
+
+Big takeaway (call-out box):
+"Why not turn every smartphone into a crowdsourced network sensor?"
+
+VISUAL: Split-screen: left side shows a confused user staring at a
+"No Signal" icon; right side shows an expensive drive-test vehicle.
+
+--------------------------------------------------------------------------------
+SLIDE 3 — THE SOLUTION
+--------------------------------------------------------------------------------
+Title: "Our Solution"
+
+Large centered statement:
+"A distributed system that collects cellular metrics from Android phones
+in real time and centralizes them in the cloud."
+
+Three pillar icons with one-line descriptions below:
+📱 MOBILE APP — Collects cell data every 10 seconds
+☁️  CLOUD SERVER — Receives, stores, and analyzes
+📊 DASHBOARD — Live visualization + historical statistics
+
+ANIMATION: Each pillar icon grows in sequence with a glow pulse.
+
+--------------------------------------------------------------------------------
+SLIDE 4 — SYSTEM ARCHITECTURE (DIAGRAM SLIDE — FULL PAGE)
+--------------------------------------------------------------------------------
+Title: "Architecture"
+
+Build a clean architecture diagram with these boxes + arrows:
+
+[Android Phone]  ──HTTPS POST──▶  [Flask Server (Render Cloud)]
+                                       │
+                                       ├──▶ [SQLite Database]
+                                       │
+                                       └──▶ [Web Dashboard]
+[Android Phone]  ◀──HTTPS GET────  [Stats API]
+
+Label arrows:
+- "POST /api/celldata every 10s" (going right)
+- "GET /api/stats?start=...&end=..." (going left)
+
+ANIMATION: Each arrow draws itself left-to-right in sequence (WIPE effect).
+Boxes fade in before their arrows.
+
+--------------------------------------------------------------------------------
+SLIDE 5 — WHAT WE COLLECT
+--------------------------------------------------------------------------------
+Title: "Data Captured Every 10 Seconds"
+
+Grid of 8 tiles with icons and example values:
+
+📡 OPERATOR           "Alfa" / "Touch"
+📶 SIGNAL POWER       -85 dBm
+🔊 SINR / SNR         5 dB
+📱 NETWORK TYPE       2G / 3G / 4G / 5G
+🎛 FREQUENCY BAND    EARFCN 1300
+🆔 CELL ID            37100-81937409
+⏱ TIMESTAMP         2026-04-21T14:30:00
+🔑 DEVICE ID + MAC    4B:10:23:DF:9E:FD
+
+ANIMATION: Tiles appear in a stagger (each 0.15s apart).
+
+--------------------------------------------------------------------------------
+SLIDE 6 — ANDROID APP BREAKDOWN
+--------------------------------------------------------------------------------
+Title: "The Android App"
+
+Show a mock phone screen (portrait rectangle) displaying the actual UI:
+- Server URL field
+- Start/Stop button
+- Live cell data card (operator, signal, network type, etc.)
+
+Beside the phone mock, list the Kotlin source files with 1-line descriptions:
+• MainActivity.kt       — Main UI + permission handling
+• CellInfoCollector.kt  — Reads TelephonyManager (2G/3G/4G/5G)
+• CellInfoData.kt       — Data class for one measurement
+• CellInfoService.kt    — Foreground service, runs every 10s
+• ServerClient.kt       — OkHttp client for REST API
+• StatisticsActivity.kt — Date-range statistics screen
+
+Mention key technologies as chips/badges below:
+[Kotlin] [Coroutines] [OkHttp] [Gson] [Material Design] [Foreground Service]
+
+--------------------------------------------------------------------------------
+SLIDE 7 — HOW EACH NETWORK TYPE IS HANDLED
+--------------------------------------------------------------------------------
+Title: "2G / 3G / 4G / 5G — One Code Path, Four Protocols"
+
+Four-column comparison table:
+
+                 2G (GSM)      3G (WCDMA)    4G (LTE)       5G (NR)
+CellInfo class   CellInfoGsm   CellInfoWcdma CellInfoLte    CellInfoNr
+Signal metric    RSSI          RSCP          RSRP           SS-RSRP
+SINR             —             —             rssnr ✓        ssSinr ✓
+Frequency        ARFCN         UARFCN        EARFCN         NRARFCN
+Cell ID format   LAC-CID       LAC-CID       TAC-CI         TAC-NCI
+
+Caption: "The app auto-detects the connected cell type and extracts the
+correct fields from the Android API."
+
+--------------------------------------------------------------------------------
+SLIDE 8 — THE SERVER
+--------------------------------------------------------------------------------
+Title: "Flask Backend + SQLite + Render Cloud"
+
+Three boxes stacked vertically:
+
+1. REST API (3 endpoints)
+   • POST /api/celldata    ← Phones push measurements
+   • GET  /api/stats       ← Statistics for a date range
+   • GET  /                ← Live web dashboard
+
+2. Database Schema
+   - 11 columns: operator, signal_power, sinr, network_type,
+     frequency_band, cell_id, timestamp, device_id, ip_address,
+     mac_address, received_at
+   - Thread-safe writes via Python locks
+
+3. Deployment
+   - Hosted 24/7 on Render free tier
+   - Auto-deploy on every git push
+   - HTTPS + Gunicorn production WSGI
+
+Add badge: "🌐 Live at four51-project.onrender.com"
+
+--------------------------------------------------------------------------------
+SLIDE 9 — LIVE DASHBOARD (SCREENSHOT SLIDE)
+--------------------------------------------------------------------------------
+Title: "Real-Time Centralized View"
+
+Large screenshot or mock of the dashboard showing:
+- "Connected Devices: N" stat box
+- Device List table with columns: Device ID | IP | MAC | Last Seen | Status
+- Recent Measurements table with actual rows
+
+Caption: "Auto-refreshes every 10 seconds. Tracks currently AND previously
+connected devices."
+
+ANIMATION: Screenshot slides in from right; annotation arrows point to
+key features (MAC address column, active/inactive status).
+
+--------------------------------------------------------------------------------
+SLIDE 10 — STATISTICS FEATURE
+--------------------------------------------------------------------------------
+Title: "Historical Analytics"
+
+Show the in-app statistics screen mockup displaying:
+• Connectivity per Operator:    Alfa 65% · Touch 35%
+• Connectivity per Network:     4G 78% · 3G 20% · 2G 2%
+• Avg Signal per Network Type:  4G: -87 dBm · 3G: -95 dBm
+• Avg Signal per Device:        Device A: -85 dBm · Device B: -91 dBm
+• Avg SINR per Network Type:    4G: 8 dB · 5G: 12 dB
+
+Mention: "User picks any start/end date — server computes stats on the fly."
+
+ANIMATION: Stat values count up from 0 to their final number.
+
+--------------------------------------------------------------------------------
+SLIDE 11 — TECH STACK (VISUAL BADGE WALL)
+--------------------------------------------------------------------------------
+Title: "Built With"
+
+Display tech logos/badges in two rows:
+
+ANDROID SIDE:
+[Kotlin] [Android SDK] [Gradle] [OkHttp] [Gson] [Coroutines] [Material]
+
+SERVER SIDE:
+[Python] [Flask] [SQLite] [Gunicorn] [Render Cloud] [GitHub]
+
+ANIMATION: Each badge fades in with a slight rotation, staggered.
+
+--------------------------------------------------------------------------------
+SLIDE 12 — CHALLENGES & HOW WE SOLVED THEM
+--------------------------------------------------------------------------------
+Title: "Challenges Overcome"
+
+Three pain points with resolutions:
+
+❗ Android 10+ blocks direct MAC address access
+   ✓ Implemented NetworkInterface fallback + deterministic pseudo-MAC
+     derived from Android ID — each device still has a consistent,
+     unique MAC-formatted identifier.
+
+❗ Phone and server on different networks
+   ✓ Deployed server to Render cloud with HTTPS — works from any
+     network (Wi-Fi, mobile data, anywhere).
+
+❗ Render free tier cold-start delay (~30s after idle)
+   ✓ Bumped OkHttp client timeouts from 5s to 45s so the first
+     request after a sleep still succeeds.
+
+--------------------------------------------------------------------------------
+SLIDE 13 — LIVE DEMO
+--------------------------------------------------------------------------------
+Title: "Live Demo"
+
+Large centered text only:
+"Let's see it in action."
+
+Three bullet hints of what to show:
+1. Open app on phone → Start Monitoring
+2. Refresh dashboard → phone appears with live data
+3. Fetch statistics over today's date range
+
+VISUAL: Big animated "▶ PLAY" icon. Could use a QR code linking to
+the dashboard URL for audience to follow along on their phones.
+
+--------------------------------------------------------------------------------
+SLIDE 14 — REQUIREMENTS COMPLIANCE
+--------------------------------------------------------------------------------
+Title: "Requirements Checklist — All Met"
+
+Two columns of checkmarks (✓):
+
+DATA COLLECTION                     SERVER FEATURES
+✓ Operator                          ✓ Multiple simultaneous connections
+✓ Signal Power (dBm)                ✓ SQLite database storage
+✓ SINR / SNR                        ✓ Thread-safe concurrent writes
+✓ Network Type                      ✓ Date-range statistics API
+✓ Frequency Band                    ✓ Web dashboard
+✓ Cell ID                           ✓ # connected devices shown
+✓ Timestamp                         ✓ IP + MAC tracking
+✓ 2G + 3G + 4G + 5G support        ✓ Previously-connected history
+
+STATISTICS (all 5 required)         BONUSES WE ADDED
+✓ Connectivity per operator         ✦ 5G support (beyond 2G/3G/4G)
+✓ Connectivity per network type     ✦ Cloud hosting (not just LAN)
+✓ Avg signal per network type       ✦ Auto-deploy CI/CD via GitHub
+✓ Avg signal per device             ✦ HTTPS encryption end-to-end
+✓ Avg SINR per network type
+
+--------------------------------------------------------------------------------
+SLIDE 15 — CLOSING / Q&A
+--------------------------------------------------------------------------------
+Title: "Thank You"
+
+Center: large "?" symbol or "Q & A"
+
+Below: Contact / project links
+• GitHub: github.com/karlkhoury/451-project
+• Live Dashboard: four51-project.onrender.com
+
+ANIMATION: Title scales up with glow. Links fade in below.
+
+================================================================================
+  5. SPEAKING NOTES (OPTIONAL — TO GO IN SLIDE NOTES)
+================================================================================
+
+- Open with "How often have you had 4 bars of signal but terrible internet?"
+  to hook the audience.
+- On the architecture slide, mentioned end-to-end HTTPS and how the system
+  scales naturally because every phone has its own device ID.
+- Emphasize the MAC address Android privacy story — it's a real engineering
+  constraint that required a creative solution (pseudo-MAC from Android ID).
+- During the demo, start the app BEFORE opening the dashboard — this way
+  when you switch to the dashboard the phone is already appearing.
+- If the server is slow to respond initially, acknowledge it: "This is a
+  Render cold-start — in production we'd use a paid tier with zero sleep."
+
+================================================================================
+  6. RAW FACTS / NUMBERS TO INCLUDE SOMEWHERE
+================================================================================
+
+- Data collection interval: every 10 seconds
+- Android target SDK: 34 (Android 14)
+- Android minimum SDK: 26 (Android 8.0)
+- Database columns: 11
+- REST endpoints: 3
+- Kotlin source files: 6
+- Network types supported: 4 (2G, 3G, 4G, 5G)
+- Server timeout (cold-start proof): 45 seconds
+- Typical LTE signal range observed: -75 to -95 dBm
+- Typical LTE SINR range observed: -3 to 20 dB
+
+================================================================================
+  7. OPTIONAL FLAIR / "WOW" IDEAS
+================================================================================
+
+- Insert a 3-second animated GIF of the dashboard auto-refreshing on the
+  "Live Dashboard" slide.
+- On the architecture slide, have the data packet icon travel along the
+  arrow from phone to server (custom motion path animation).
+- Include a mini "what's next" slide proposing future work:
+  future ideas: heatmap visualization, predictive signal quality,
+  crowdsourced coverage map, multi-tenant operator dashboards.
+
+================================================================================
+  END OF BRIEF
+================================================================================

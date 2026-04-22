@@ -25,19 +25,23 @@ class CellInfoService : Service() {
     companion object {
         const val ACTION_CELL_UPDATE = "com.eece451.networkcellanalyzer.CELL_UPDATE"
         const val EXTRA_SERVER_URL = "server_url"
+        const val EXTRA_DEMO_MODE = "demo_mode"
         const val CHANNEL_ID = "cell_monitor_channel"
         private const val TAG = "CellInfoService"
         private const val INTERVAL_MS = 10_000L // 10 seconds
     }
 
     private lateinit var collector: CellInfoCollector
+    private lateinit var mockCollector: MockCellInfoCollector
     private lateinit var serverClient: ServerClient
+    private var demoMode = false
     private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var monitoringJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
         collector = CellInfoCollector(this)
+        mockCollector = MockCellInfoCollector(this)
         serverClient = ServerClient("https://four51-project.onrender.com")
         createNotificationChannel()
     }
@@ -48,6 +52,7 @@ class CellInfoService : Service() {
      */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val serverUrl = intent?.getStringExtra(EXTRA_SERVER_URL) ?: "https://four51-project.onrender.com"
+        demoMode = intent?.getBooleanExtra(EXTRA_DEMO_MODE, false) ?: false
         serverClient.updateServerUrl(serverUrl)
 
         // Show a persistent notification (required for foreground services)
@@ -77,7 +82,7 @@ class CellInfoService : Service() {
         monitoringJob = serviceScope.launch {
             while (isActive) {
                 try {
-                    val cellData = collector.collect()
+                    val cellData = if (demoMode) mockCollector.collect() else collector.collect()
                     if (cellData != null) {
                         // Send to server (runs on IO thread internally)
                         val sent = serverClient.sendCellData(cellData)

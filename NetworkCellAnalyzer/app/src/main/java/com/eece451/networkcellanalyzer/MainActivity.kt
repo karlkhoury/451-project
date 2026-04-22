@@ -9,9 +9,11 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import android.graphics.Color
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import com.google.android.material.switchmaterial.SwitchMaterial
 
 /**
  * MainActivity: The main screen of the app.
@@ -48,6 +50,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvCellId: TextView
     private lateinit var tvFrequencyBand: TextView
     private lateinit var tvTimestamp: TextView
+    private lateinit var tvQualityGrade: TextView
+    private lateinit var switchDemoMode: SwitchMaterial
 
     /**
      * BroadcastReceiver: listens for updates from CellInfoService.
@@ -73,6 +77,10 @@ class MainActivity : AppCompatActivity() {
                 tvFrequencyBand.text = if (band != -1) band.toString() else "N/A"
 
                 tvTimestamp.text = intent.getStringExtra("timestamp") ?: "--"
+
+                // Compute and display network quality grade (A/B/C/D)
+                val sinrForGrade = if (sinr != Int.MAX_VALUE) sinr else null
+                updateQualityGrade(signalPower, sinrForGrade)
 
                 // Show server connection status
                 val serverOk = intent.getBooleanExtra("serverStatus", false)
@@ -104,6 +112,8 @@ class MainActivity : AppCompatActivity() {
         tvCellId = findViewById(R.id.tvCellId)
         tvFrequencyBand = findViewById(R.id.tvFrequencyBand)
         tvTimestamp = findViewById(R.id.tvTimestamp)
+        tvQualityGrade = findViewById(R.id.tvQualityGrade)
+        switchDemoMode = findViewById(R.id.switchDemoMode)
 
         // Start/Stop button click handler
         btnStartStop.setOnClickListener {
@@ -150,6 +160,7 @@ class MainActivity : AppCompatActivity() {
         val serverUrl = editServerUrl.text.toString()
         val serviceIntent = Intent(this, CellInfoService::class.java).apply {
             putExtra(CellInfoService.EXTRA_SERVER_URL, serverUrl)
+            putExtra(CellInfoService.EXTRA_DEMO_MODE, switchDemoMode.isChecked)
         }
 
         // startForegroundService is needed on Android 8.0+ for foreground services
@@ -202,6 +213,32 @@ class MainActivity : AppCompatActivity() {
     /**
      * Called after the user responds to the permission dialog.
      */
+    /**
+     * Grades the network from A (excellent) to D (poor) using a simple
+     * scoring model: signal power weighted with SINR when available.
+     */
+    private fun updateQualityGrade(signalDbm: Int, sinr: Int?) {
+        if (signalDbm == Int.MAX_VALUE) {
+            tvQualityGrade.text = "-"
+            tvQualityGrade.setBackgroundColor(Color.parseColor("#9E9E9E"))
+            return
+        }
+        // Signal score: -60 dBm or better = 100, -110 dBm or worse = 0
+        val signalScore = ((signalDbm + 110).coerceIn(0, 50) / 50.0) * 100.0
+        // SINR score: 20+ dB = 100, -5 dB = 0
+        val sinrScore = if (sinr != null) ((sinr + 5).coerceIn(0, 25) / 25.0) * 100.0 else signalScore
+        val combined = (signalScore * 0.6 + sinrScore * 0.4)
+
+        val (grade, colorHex) = when {
+            combined >= 80 -> "A" to "#2E7D32"   // green
+            combined >= 60 -> "B" to "#689F38"   // light green
+            combined >= 40 -> "C" to "#F9A825"   // amber
+            else           -> "D" to "#C62828"   // red
+        }
+        tvQualityGrade.text = grade
+        tvQualityGrade.setBackgroundColor(Color.parseColor(colorHex))
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {

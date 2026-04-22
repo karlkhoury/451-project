@@ -16,11 +16,13 @@ Use http://10.0.2.2:5000 from the Android emulator (10.0.2.2 is the host machine
 Use http://<your-pc-ip>:5000 from a real phone on the same Wi-Fi network.
 """
 
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify, render_template_string, Response
 import sqlite3
 import datetime
 import threading
 import os
+import csv
+import io
 
 app = Flask(__name__)
 DB_NAME = "celldata.db"
@@ -212,6 +214,65 @@ def get_statistics():
     })
 
 
+# ==================== CSV EXPORT ====================
+
+@app.route("/api/export.csv")
+def export_csv():
+    """Download all measurements as a CSV file."""
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT * FROM celldata ORDER BY received_at DESC"
+    ).fetchall()
+    conn.close()
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow([
+        "id", "operator", "signal_power", "sinr", "network_type",
+        "frequency_band", "cell_id", "timestamp", "device_id",
+        "ip_address", "mac_address", "received_at"
+    ])
+    for r in rows:
+        writer.writerow([r[k] for k in [
+            "id", "operator", "signal_power", "sinr", "network_type",
+            "frequency_band", "cell_id", "timestamp", "device_id",
+            "ip_address", "mac_address", "received_at"
+        ]])
+
+    return Response(
+        buf.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=cell_measurements.csv"}
+    )
+
+
+# ==================== OPERATOR COMPARISON ====================
+
+@app.route("/api/compare_operators")
+def compare_operators():
+    """Return side-by-side comparison of average metrics per operator."""
+    conn = get_db()
+    rows = conn.execute(
+        """SELECT operator,
+                  COUNT(*) as samples,
+                  ROUND(AVG(signal_power), 1) as avg_signal,
+                  ROUND(AVG(sinr), 1) as avg_sinr
+           FROM celldata
+           GROUP BY operator
+           ORDER BY samples DESC"""
+    ).fetchall()
+    conn.close()
+    return jsonify([
+        {
+            "operator": r["operator"],
+            "samples": r["samples"],
+            "avg_signal_dbm": r["avg_signal"],
+            "avg_sinr_db": r["avg_sinr"],
+        }
+        for r in rows
+    ])
+
+
 # ==================== WEB DASHBOARD (Server Interface) ====================
 
 DASHBOARD_HTML = """
@@ -237,6 +298,12 @@ DASHBOARD_HTML = """
 
     <div class="stat-box">
         <h3>Connected Devices: {{ device_count }}</h3>
+        <p style="margin-top:10px;">
+            <a href="/api/export.csv"
+               style="background:#6200EE;color:white;padding:8px 14px;border-radius:6px;text-decoration:none;font-weight:bold;">
+               &#x2B07; Download All Data (CSV)
+            </a>
+        </p>
     </div>
 
     <h2>Device List (Currently and Previously Connected)</h2>

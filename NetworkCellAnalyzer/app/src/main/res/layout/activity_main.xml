@@ -42,6 +42,14 @@
                 android:inputType="textUri" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Demo mode toggle (useful for testing on emulators) -->
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchDemoMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Demo Mode (simulated cell data)"
+            android:layout_marginBottom="8dp" />
+
         <!-- Start / Stop button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnStartStop"
@@ -98,6 +106,36 @@
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:layout_marginBottom="12dp" />
+
+                <!-- Network quality grade badge -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="#F5F5F5"
+                    android:padding="12dp"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Network Quality"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_weight="1" />
+
+                    <TextView
+                        android:id="@+id/tvQualityGrade"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:text="-"
+                        android:textSize="28sp"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFF"
+                        android:gravity="center"
+                        android:background="#9E9E9E" />
+                </LinearLayout>
 
                 <!-- Operator -->
                 <TextView
