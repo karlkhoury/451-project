@@ -31,9 +31,11 @@ import java.util.*
  */
 class StatisticsActivity : AppCompatActivity() {
 
+    private lateinit var btnBack: Button
     private lateinit var btnStartDate: Button
     private lateinit var btnEndDate: Button
     private lateinit var btnFetch: Button
+    private lateinit var tvError: TextView
     private lateinit var tvStatsOperator: TextView
     private lateinit var tvStatsNetworkType: TextView
     private lateinit var tvStatsSignal: TextView
@@ -53,14 +55,19 @@ class StatisticsActivity : AppCompatActivity() {
         serverClient = ServerClient(serverUrl)
 
         // Find UI elements
+        btnBack = findViewById(R.id.btnBack)
         btnStartDate = findViewById(R.id.btnStartDate)
         btnEndDate = findViewById(R.id.btnEndDate)
         btnFetch = findViewById(R.id.btnFetchStats)
+        tvError = findViewById(R.id.tvError)
         tvStatsOperator = findViewById(R.id.tvStatsOperator)
         tvStatsNetworkType = findViewById(R.id.tvStatsNetworkType)
         tvStatsSignal = findViewById(R.id.tvStatsSignal)
         tvStatsSignalDevice = findViewById(R.id.tvStatsSignalDevice)
         tvStatsSinr = findViewById(R.id.tvStatsSinr)
+
+        // Back button → close this activity and return to MainActivity
+        btnBack.setOnClickListener { finish() }
 
         // Date picker for start date
         btnStartDate.setOnClickListener { showDatePicker(isStart = true) }
@@ -68,12 +75,54 @@ class StatisticsActivity : AppCompatActivity() {
 
         // Fetch stats button
         btnFetch.setOnClickListener {
-            if (startDate.isEmpty() || endDate.isEmpty()) {
-                Toast.makeText(this, "Please select both dates", Toast.LENGTH_SHORT).show()
+            val validationError = validateDates()
+            if (validationError != null) {
+                showError(validationError)
                 return@setOnClickListener
             }
+            clearError()
             fetchStatistics()
         }
+    }
+
+    /**
+     * Validates the two dates the user picked.
+     * Returns an error message string if invalid, or null if everything is fine.
+     */
+    private fun validateDates(): String? {
+        if (startDate.isEmpty() && endDate.isEmpty()) {
+            return "Please select both a start date and an end date."
+        }
+        if (startDate.isEmpty()) return "Please select a start date."
+        if (endDate.isEmpty()) return "Please select an end date."
+
+        val fmt = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { isLenient = false }
+        val start = try { fmt.parse(startDate) } catch (_: Exception) { null }
+        val end = try { fmt.parse(endDate) } catch (_: Exception) { null }
+
+        if (start == null || end == null) {
+            return "One of the dates is invalid. Please reselect."
+        }
+        if (end.before(start)) {
+            return "End date ($endDate) must be on or after start date ($startDate)."
+        }
+        val today = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 23); set(Calendar.MINUTE, 59)
+        }.time
+        if (start.after(today)) {
+            return "Start date cannot be in the future."
+        }
+        return null
+    }
+
+    private fun showError(message: String) {
+        tvError.text = message
+        tvError.visibility = android.view.View.VISIBLE
+    }
+
+    private fun clearError() {
+        tvError.text = ""
+        tvError.visibility = android.view.View.GONE
     }
 
     /**
@@ -118,22 +167,52 @@ class StatisticsActivity : AppCompatActivity() {
                     val type = object : TypeToken<Map<String, Any>>() {}.type
                     val stats: Map<String, Any> = Gson().fromJson(json, type)
 
-                    // Display each statistic
-                    tvStatsOperator.text = formatMap(stats["connectivity_per_operator"])
-                    tvStatsNetworkType.text = formatMap(stats["connectivity_per_network_type"])
-                    tvStatsSignal.text = formatMap(stats["avg_signal_per_network_type"])
-                    tvStatsSignalDevice.text = formatMap(stats["avg_signal_per_device"])
-                    tvStatsSinr.text = formatMap(stats["avg_sinr_per_network_type"])
+                    // Detect "no data in this range" — every group is empty
+                    val allEmpty = listOf(
+                        "connectivity_per_operator",
+                        "connectivity_per_network_type",
+                        "avg_signal_per_network_type",
+                        "avg_signal_per_device",
+                        "avg_sinr_per_network_type"
+                    ).all {
+                        val v = stats[it]
+                        v == null || (v is Map<*, *> && v.isEmpty())
+                    }
+
+                    if (allEmpty) {
+                        showError("No measurements were recorded between $startDate and $endDate.")
+                        resetStatViews()
+                    } else {
+                        clearError()
+                        tvStatsOperator.text = formatMap(stats["connectivity_per_operator"])
+                        tvStatsNetworkType.text = formatMap(stats["connectivity_per_network_type"])
+                        tvStatsSignal.text = formatMap(stats["avg_signal_per_network_type"])
+                        tvStatsSignalDevice.text = formatMap(stats["avg_signal_per_device"])
+                        tvStatsSinr.text = formatMap(stats["avg_sinr_per_network_type"])
+                    }
                 } catch (e: Exception) {
-                    Toast.makeText(this@StatisticsActivity, "Error parsing stats", Toast.LENGTH_SHORT).show()
+                    showError("Couldn't read the server's response. Please try again.")
                 }
             } else {
-                Toast.makeText(this@StatisticsActivity, "Could not reach server", Toast.LENGTH_SHORT).show()
+                showError("Could not reach the server. Check your connection and try again.")
             }
 
             btnFetch.isEnabled = true
             btnFetch.text = "Fetch Statistics"
         }
+    }
+
+    /**
+     * Resets all stat text views back to the empty placeholder.
+     * Called when a query returns no data, so stale numbers don't linger.
+     */
+    private fun resetStatViews() {
+        val placeholder = "No data yet"
+        tvStatsOperator.text = placeholder
+        tvStatsNetworkType.text = placeholder
+        tvStatsSignal.text = placeholder
+        tvStatsSignalDevice.text = placeholder
+        tvStatsSinr.text = placeholder
     }
 
     /**
