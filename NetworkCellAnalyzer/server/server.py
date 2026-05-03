@@ -16,7 +16,7 @@ Use http://10.0.2.2:5000 from the Android emulator (10.0.2.2 is the host machine
 Use http://<your-pc-ip>:5000 from a real phone on the same Wi-Fi network.
 """
 
-from flask import Flask, request, jsonify, render_template_string, Response, send_from_directory, redirect
+from flask import Flask, request, jsonify, render_template_string, Response
 import sqlite3
 import datetime
 import threading
@@ -314,29 +314,6 @@ def about():
     return render_template_string(ABOUT_HTML)
 
 
-# ==================== APK DOWNLOAD ====================
-
-APK_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
-APK_FILENAME = "network-cell-analyzer.apk"
-GITHUB_RELEASES_URL = "https://github.com/karlkhoury/451-project/releases/latest"
-
-@app.route("/download")
-def download_apk():
-    """
-    Serve the Android APK so phones can install the app by scanning a QR code.
-    If the APK isn't bundled with the deploy, fall back to GitHub Releases.
-    """
-    apk_path = os.path.join(APK_DIR, APK_FILENAME)
-    if os.path.exists(apk_path):
-        return send_from_directory(
-            APK_DIR, APK_FILENAME,
-            as_attachment=True,
-            mimetype="application/vnd.android.package-archive"
-        )
-    # Fallback — no APK on disk, send the user to the GitHub Releases page
-    return redirect(GITHUB_RELEASES_URL, code=302)
-
-
 # ==================== WEB DASHBOARD (Server Interface) ====================
 
 DASHBOARD_HTML = """
@@ -368,23 +345,6 @@ DASHBOARD_HTML = """
             box-shadow: 0 4px 14px rgba(98,0,238,0.25);
         }
         .stat-box h3 { margin: 0; font-size: 22px; }
-        .qr-box {
-            background: white; border-radius: 12px; padding: 20px;
-            margin: 16px 0; display: flex; gap: 24px; align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-            border: 2px dashed #6200EE;
-        }
-        .qr-box .qr-text { flex: 1; }
-        .qr-box .qr-text h3 { margin: 0 0 8px 0; color: #6200EE; }
-        .qr-box .qr-text p { margin: 6px 0; color: #444; font-size: 14px; }
-        .qr-box .qr-link a { color: #6200EE; word-break: break-all; }
-        .qr-box .qr-img img {
-            display: block; padding: 8px; background: white;
-            border-radius: 8px;
-        }
-        @media (max-width: 700px) {
-            .qr-box { flex-direction: column; text-align: center; }
-        }
         .download-btn {
             background: white; color: #6200EE; padding: 10px 18px;
             border-radius: 8px; text-decoration: none; font-weight: bold;
@@ -439,22 +399,6 @@ DASHBOARD_HTML = """
     <div class="stat-box">
         <h3>&#x1F4F1; Active Devices: {{ device_count }}</h3>
         <a href="/api/export.csv" class="download-btn">&#x2B07; Download CSV</a>
-    </div>
-
-    <div class="qr-box">
-        <div class="qr-text">
-            <h3>&#x1F4F2; Get The App</h3>
-            <p>Scan this QR code with any Android phone to download and install the
-               Network Cell Analyzer app. The app is preconfigured to connect to this
-               server &mdash; just open it and tap <b>Start Monitoring</b>.</p>
-            <p class="qr-link">
-                Or visit <a href="/download">{{ download_url }}</a> directly.
-            </p>
-        </div>
-        <div class="qr-img">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ download_url|urlencode }}"
-                 alt="Download QR code" width="180" height="180" />
-        </div>
     </div>
 
     {% if operator_comparison %}
@@ -691,16 +635,12 @@ def dashboard():
         for r in op_rows
     ]
 
-    # Build the absolute URL the QR code should encode
-    download_url = request.url_root.rstrip("/") + "/download"
-
     return render_template_string(
         DASHBOARD_HTML,
         device_count=active_count,
         devices=devices,
         recent=recent,
         operator_comparison=operator_comparison,
-        download_url=download_url,
     )
 
 
