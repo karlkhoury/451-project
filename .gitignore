@@ -7,6 +7,8 @@
 *.aab
 *.ap_
 *.dex
+# Exception: the APK we serve through /download is intentionally tracked
+!NetworkCellAnalyzer/server/static/network-cell-analyzer.apk
 **/build/
 **/captures/
 .externalNativeBuild/
